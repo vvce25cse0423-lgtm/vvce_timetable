@@ -79,7 +79,6 @@ class AppTheme {
         primary: primaryBlue,
         secondary: accentGold,
         surface: Colors.white,
-        background: backgroundLight,
       ),
       textTheme: GoogleFonts.poppinsTextTheme().copyWith(
         displayLarge: GoogleFonts.poppins(
@@ -132,15 +131,14 @@ class AppTheme {
         primary: const Color(0xFF7986CB),
         secondary: accentGold,
         surface: surfaceDark,
-        background: backgroundDark,
       ),
       scaffoldBackgroundColor: backgroundDark,
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
-      cardTheme: CardTheme(
+      cardTheme: const CardTheme(
         color: cardDark,
         elevation: 4,
         shadowColor: Colors.black45,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),

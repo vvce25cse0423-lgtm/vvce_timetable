@@ -23,7 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _sectionController = TextEditingController(text: 'G');
 
   bool _isLoading = false;
-  bool _obscureHint = false;
 
   @override
   void dispose() {

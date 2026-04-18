@@ -3,8 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:ui' show FontFeature;
 import '../data/timetable_data.dart';
-import '../models/timetable_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/prefs_service.dart';
 import '../widgets/day_selector.dart';
@@ -91,7 +91,9 @@ class _TimetableScreenState extends State<TimetableScreen>
     if (confirm == true && mounted) {
       final prefs = await PrefsService.getInstance();
       await prefs.logout();
-      Navigator.of(context).pushReplacement(
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      navigator.pushReplacement(
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => const LoginScreen(),
           transitionsBuilder: (_, animation, __, child) {
@@ -330,7 +332,7 @@ class _TimetableScreenState extends State<TimetableScreen>
                                 color: AppTheme.accentGold,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
-                                fontFeatures: const [],
+                                fontFeatures: const <FontFeature>[],
                               ),
                             );
                           },

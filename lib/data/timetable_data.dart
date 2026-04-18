@@ -55,7 +55,7 @@ const List<String> slotEndTimes = [
 
 final Map<String, List<ClassSlot?>> timetableData = {
   'Monday': [
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'MAT',
       subjectName: 'Mathematics',
       faculty: 'Dr. Kavitha R',
@@ -64,7 +64,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '09:20',
       type: SubjectType.mathematics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHE',
       subjectName: 'Engineering Chemistry',
       faculty: 'Dr. Roopa M',
@@ -73,7 +73,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '10:10',
       type: SubjectType.chemistry,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCS',
       subjectName: 'C Programming',
       faculty: 'Prof. Suresh K',
@@ -83,7 +83,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       type: SubjectType.programming,
     ),
     // Recess 11:00 - 11:15 (shown as part of slot)
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'IECK',
       subjectName: 'Electrical & Civil Engg.',
       faculty: 'Prof. Ramesh B',
@@ -92,7 +92,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:50',
       type: SubjectType.electronics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'AIK',
       subjectName: 'Artificial Intelligence',
       faculty: 'Dr. Priya S',
@@ -102,7 +102,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       type: SubjectType.ai,
     ),
     null, // Lunch Break
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'ENG',
       subjectName: 'Communicative English',
       faculty: 'Prof. Anitha D',
@@ -111,7 +111,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '14:20',
       type: SubjectType.english,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCS',
       subjectName: 'C Programming',
       faculty: 'Prof. Suresh K',
@@ -123,7 +123,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
     null, // Free Period
   ],
   'Tuesday': [
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'ENG',
       subjectName: 'Communicative English',
       faculty: 'Prof. Anitha D',
@@ -132,7 +132,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '09:20',
       type: SubjectType.english,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'MAT',
       subjectName: 'Mathematics',
       faculty: 'Dr. Kavitha R',
@@ -141,7 +141,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '10:10',
       type: SubjectType.mathematics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'AIK',
       subjectName: 'Artificial Intelligence',
       faculty: 'Dr. Priya S',
@@ -150,7 +150,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:00',
       type: SubjectType.ai,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'IECK',
       subjectName: 'Electrical & Civil Engg.',
       faculty: 'Prof. Ramesh B',
@@ -159,7 +159,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:50',
       type: SubjectType.electronics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHE',
       subjectName: 'Engineering Chemistry',
       faculty: 'Dr. Roopa M',
@@ -170,7 +170,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
     ),
     null, // Lunch Break
     // CHELAB - 3 hour lab (13:30 - 16:30)
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHELAB',
       subjectName: 'Chemistry Lab',
       faculty: 'Dr. Roopa M',
@@ -179,7 +179,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '14:20',
       type: SubjectType.lab,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHELAB',
       subjectName: 'Chemistry Lab',
       faculty: 'Dr. Roopa M',
@@ -188,7 +188,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '15:10',
       type: SubjectType.lab,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHELAB',
       subjectName: 'Chemistry Lab',
       faculty: 'Dr. Roopa M',
@@ -199,7 +199,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
     ),
   ],
   'Wednesday': [
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCS',
       subjectName: 'C Programming',
       faculty: 'Prof. Suresh K',
@@ -208,7 +208,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '09:20',
       type: SubjectType.programming,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'IECK',
       subjectName: 'Electrical & Civil Engg.',
       faculty: 'Prof. Ramesh B',
@@ -217,7 +217,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '10:10',
       type: SubjectType.electronics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'MAT',
       subjectName: 'Mathematics',
       faculty: 'Dr. Kavitha R',
@@ -226,7 +226,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:00',
       type: SubjectType.mathematics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHE',
       subjectName: 'Engineering Chemistry',
       faculty: 'Dr. Roopa M',
@@ -235,7 +235,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:50',
       type: SubjectType.chemistry,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'ENG',
       subjectName: 'Communicative English',
       faculty: 'Prof. Anitha D',
@@ -245,7 +245,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       type: SubjectType.english,
     ),
     null, // Lunch Break
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'AIK',
       subjectName: 'Artificial Intelligence',
       faculty: 'Dr. Priya S',
@@ -254,7 +254,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '14:20',
       type: SubjectType.ai,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PE',
       subjectName: 'Physical Education',
       faculty: 'Coach Manjunath',
@@ -266,7 +266,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
     null, // Free
   ],
   'Thursday': [
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'AIK',
       subjectName: 'Artificial Intelligence',
       faculty: 'Dr. Priya S',
@@ -275,7 +275,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '09:20',
       type: SubjectType.ai,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'ENG',
       subjectName: 'Communicative English',
       faculty: 'Prof. Anitha D',
@@ -284,7 +284,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '10:10',
       type: SubjectType.english,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHE',
       subjectName: 'Engineering Chemistry',
       faculty: 'Dr. Roopa M',
@@ -293,7 +293,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:00',
       type: SubjectType.chemistry,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'MAT',
       subjectName: 'Mathematics',
       faculty: 'Dr. Kavitha R',
@@ -302,7 +302,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:50',
       type: SubjectType.mathematics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCS',
       subjectName: 'C Programming',
       faculty: 'Prof. Suresh K',
@@ -313,7 +313,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
     ),
     null, // Lunch Break
     // PLCS Lab - 3 hours
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCSLAB',
       subjectName: 'Programming Lab',
       faculty: 'Prof. Suresh K',
@@ -322,7 +322,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '14:20',
       type: SubjectType.lab,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCSLAB',
       subjectName: 'Programming Lab',
       faculty: 'Prof. Suresh K',
@@ -331,7 +331,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '15:10',
       type: SubjectType.lab,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCSLAB',
       subjectName: 'Programming Lab',
       faculty: 'Prof. Suresh K',
@@ -342,7 +342,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
     ),
   ],
   'Friday': [
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'IECK',
       subjectName: 'Electrical & Civil Engg.',
       faculty: 'Prof. Ramesh B',
@@ -351,7 +351,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '09:20',
       type: SubjectType.electronics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'PLCS',
       subjectName: 'C Programming',
       faculty: 'Prof. Suresh K',
@@ -360,7 +360,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '10:10',
       type: SubjectType.programming,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'ENG',
       subjectName: 'Communicative English',
       faculty: 'Prof. Anitha D',
@@ -369,7 +369,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:00',
       type: SubjectType.english,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'AIK',
       subjectName: 'Artificial Intelligence',
       faculty: 'Dr. Priya S',
@@ -378,7 +378,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:50',
       type: SubjectType.ai,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'MAT',
       subjectName: 'Mathematics',
       faculty: 'Dr. Kavitha R',
@@ -388,7 +388,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       type: SubjectType.mathematics,
     ),
     null, // Lunch Break
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'IECK',
       subjectName: 'Electrical & Civil Engg.',
       faculty: 'Prof. Ramesh B',
@@ -397,7 +397,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '14:20',
       type: SubjectType.electronics,
     ),
-    ClassSlot(
+    const ClassSlot(
       subjectCode: 'CHE',
       subjectName: 'Engineering Chemistry',
       faculty: 'Dr. Roopa M',
