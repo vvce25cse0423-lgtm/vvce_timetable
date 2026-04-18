@@ -1,0 +1,147 @@
+name: Build VVCE Timetable APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-apk:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout repository ──────────────────────────────────────
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ── 2. Setup Java (required for Android build) ──────────────────
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ── 3. Setup Flutter ────────────────────────────────────────────
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      # ── 4. Verify Flutter installation ──────────────────────────────
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      # ── 5. Cache pub packages ────────────────────────────────────────
+      - name: Cache Flutter packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: flutter-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            flutter-pub-
+
+      # ── 6. Get dependencies ──────────────────────────────────────────
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ── 7. Analyze code ──────────────────────────────────────────────
+      - name: Analyze Dart code
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+
+      # ── 8. Run tests (if any) ────────────────────────────────────────
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true
+
+      # ── 9. Build Debug APK ───────────────────────────────────────────
+      - name: Build Debug APK
+        run: flutter build apk --debug --target-platform android-arm64
+
+      # ── 10. Build Release APK (unsigned) ────────────────────────────
+      - name: Build Release APK
+        run: flutter build apk --release --target-platform android-arm64,android-arm,android-x64 --split-per-abi
+
+      # ── 11. Upload Debug APK artifact ───────────────────────────────
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: vvce-timetable-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 30
+
+      # ── 12. Upload Release APKs ──────────────────────────────────────
+      - name: Upload Release APKs (arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: vvce-timetable-release-arm64
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          retention-days: 30
+
+      - name: Upload Release APKs (arm)
+        uses: actions/upload-artifact@v4
+        with:
+          name: vvce-timetable-release-arm
+          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          retention-days: 30
+
+      - name: Upload Release APKs (x64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: vvce-timetable-release-x64
+          path: build/app/outputs/flutter-apk/app-x86_64-release.apk
+          retention-days: 30
+
+      # ── 13. Create GitHub Release on tag push ────────────────────────
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk
+            build/app/outputs/flutter-apk/app-debug.apk
+          name: VVCE Timetable ${{ github.ref_name }}
+          body: |
+            ## VVCE Timetable App ${{ github.ref_name }}
+            
+            ### 📱 Downloads
+            - **arm64-v8a** — For most modern Android phones (recommended)
+            - **armeabi-v7a** — For older Android phones
+            - **x86_64** — For Android emulators
+            
+            ### ✨ Features
+            - 2nd Semester CSE Section G timetable
+            - Live "Now" indicator for ongoing classes
+            - Dark/Light mode
+            - Weekly stats overview
+            - Personalized student dashboard
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 14. Print build summary ──────────────────────────────────────
+      - name: Build Summary
+        run: |
+          echo "## ✅ Build Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| APK | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug | $(du -sh build/app/outputs/flutter-apk/app-debug.apk | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release arm64 | $(du -sh build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release arm | $(du -sh build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk | cut -f1) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download the APK from the **Artifacts** section above ⬆️" >> $GITHUB_STEP_SUMMARY
