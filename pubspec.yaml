@@ -17,6 +17,8 @@ dependencies:
   lottie: ^3.0.0
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
+  device_info_plus: ^10.1.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

@@ -12,7 +12,6 @@ import '../utils/prefs_service.dart';
 import '../widgets/day_selector.dart';
 import '../widgets/subject_card.dart';
 import '../widgets/stats_widget.dart';
-import '../widgets/vvce_logo.dart';
 import 'login_screen.dart';
 
 class TimetableScreen extends StatefulWidget {
@@ -185,7 +184,20 @@ class _TimetableScreenState extends State<TimetableScreen>
             children: [
               Row(
                 children: [
-                  const VvceLogo(size: 40, isDark: true),
+                  Container(
+                    width: 42, height: 42,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(3),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/vvce_logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(

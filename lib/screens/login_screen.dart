@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../data/student_data.dart';
+import '../utils/prefs_service.dart' show PrefsService;
 import '../utils/app_theme.dart';
 import '../utils/prefs_service.dart';
 import '../utils/notification_service.dart';
-import '../widgets/vvce_logo.dart';
 import 'timetable_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,8 +55,20 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // ── Valid — save and navigate ────────────────────────────────
+    // ── Valid — check if already logged in on another device ────
     final prefs = await PrefsService.getInstance();
+
+    if (prefs.isLoggedIn && prefs.studentName.isNotEmpty) {
+      // Account already logged in — check if it's the same device
+      final sameDevice = await prefs.isCurrentDevice();
+      if (!mounted) return;
+      if (!sameDevice) {
+        setState(() => _isLoading = false);
+        _showAlreadyLoggedInDialog();
+        return;
+      }
+    }
+
     await prefs.saveStudent(
       name:    record.name,
       usn:     record.usn,
@@ -81,6 +93,59 @@ class _LoginScreenState extends State<LoginScreen> {
           child: child,
         ),
         transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
+  }
+
+  // ── Already logged in on another device dialog ───────────────────────────
+  void _showAlreadyLoggedInDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 70, height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.devices_other_rounded,
+                    color: Colors.orange, size: 38),
+              ),
+              const SizedBox(height: 16),
+              const Text('Already Logged In',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.black87)),
+              const SizedBox(height: 10),
+              Text(
+                'Your account is already logged in on another device.\n\n'
+                'Please log out from that device first, then try again here.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.black.withOpacity(0.55), height: 1.5),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('Understood',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -189,7 +254,23 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        const VvceLogo(size: 90, isDark: true)
+        Container(
+          width: 100, height: 100,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFFB300).withOpacity(0.4),
+                blurRadius: 20, spreadRadius: 2,
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(6),
+          child: ClipOval(
+            child: Image.asset('assets/images/vvce_logo.png', fit: BoxFit.contain),
+          ),
+        )
             .animate()
             .scale(begin: const Offset(0.5, 0.5), duration: 700.ms, curve: Curves.elasticOut)
             .fadeIn(duration: 500.ms),
@@ -236,6 +317,22 @@ class _LoginScreenState extends State<LoginScreen> {
             // ── Name field ──────────────────────────────────────────
             _buildLabel('Full Name', delay: 500),
             const SizedBox(height: 8),
+            // Caps hint
+            Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.withOpacity(0.4)),
+              ),
+              child: Row(children: [
+                const Icon(Icons.keyboard_capslock_rounded, size: 14, color: Colors.amber),
+                const SizedBox(width: 6),
+                Text('Enter name in CAPITAL LETTERS only',
+                    style: TextStyle(fontSize: 11, color: Colors.amber[800], fontWeight: FontWeight.w600)),
+              ]),
+            ),
             TextFormField(
               controller: _nameCtrl,
               textCapitalization: TextCapitalization.characters,
