@@ -1,6 +1,7 @@
 // lib/data/timetable_data.dart
 // VVCE Mysore - 2nd Semester CSE Section G
 // C-Cycle Timetable dated 12.02.2026, w.e.f 23.02.2026 (V 1.0)
+// Updated per Nitin Mahadev's corrections
 
 import '../models/timetable_model.dart';
 
@@ -8,14 +9,17 @@ import '../models/timetable_model.dart';
 /// 08:00-09:00 | 09:00-10:00 | Tea Break 10:00-10:30
 /// 10:30-11:30 | 11:30-12:30 | Lunch 12:30-13:30
 /// 13:30-14:30 | 14:30-15:30 | 15:30-16:30
+/// Index: 0       1             2(tea)
+///        3       4             5(lunch)
+///        6       7             8
 
 const List<String> timeSlots = [
   '08:00 - 09:00',
   '09:00 - 10:00',
-  '10:00 - 10:30',
+  '10:00 - 10:30',   // Tea Break
   '10:30 - 11:30',
   '11:30 - 12:30',
-  '12:30 - 13:30',
+  '12:30 - 13:30',   // Lunch Break
   '13:30 - 14:30',
   '14:30 - 15:30',
   '15:30 - 16:30',
@@ -31,12 +35,13 @@ const List<String> slotEndTimes = [
   '13:30', '14:30', '15:30', '16:30',
 ];
 
-// Index 2 = Tea Break, Index 5 = Lunch Break
-
 final Map<String, List<ClassSlot?>> timetableData = {
 
+  // ── MONDAY ──────────────────────────────────────────────────────────
+  // Changes: Remove Free periods, Kannada removed,
+  //          Comm Skills merged to 1 block, faculty → Prof. Niranjan Sarja, room AB-07
   'Monday': [
-    null, // 08:00-09:00 empty
+    null, // 08:00 - empty
     const ClassSlot(
       subjectCode: '1BAIAK204',
       subjectName: 'Intro to AI & Applications',
@@ -69,32 +74,19 @@ final Map<String, List<ClassSlot?>> timetableData = {
     const ClassSlot(
       subjectCode: '1BENGK208',
       subjectName: 'Communicative Skills -II',
-      faculty: 'Prof. Ichha Jinesh',
-      room: 'M-501',
+      faculty: 'Prof. Niranjan Sarja',
+      room: 'AB-07',
       startTime: '13:30',
       endTime: '14:30',
       type: SubjectType.english,
     ),
-    const ClassSlot(
-      subjectCode: '1BENGK208',
-      subjectName: 'Communicative Skills -II',
-      faculty: 'Prof. Kirti Gupta',
-      room: 'M-501',
-      startTime: '14:30',
-      endTime: '15:30',
-      type: SubjectType.english,
-    ),
-    const ClassSlot(
-      subjectCode: '1BKBKK210',
-      subjectName: 'Samskruthika Kannada',
-      faculty: 'Ms. Ashwini H B',
-      room: 'M-101',
-      startTime: '15:30',
-      endTime: '16:30',
-      type: SubjectType.kannada,
-    ),
+    // Slot 7 (14:30) empty — Comm Skills now single block
+    // Slot 8 (15:30) empty — Kannada removed
   ],
 
+  // ── TUESDAY ─────────────────────────────────────────────────────────
+  // Changes: Remove Free periods,
+  //          Maths Lab merged to 1 block, code→1BMATS201L, add Prof. Pallavi
   'Tuesday': [
     const ClassSlot(
       subjectCode: '1BMATS201',
@@ -116,23 +108,15 @@ final Map<String, List<ClassSlot?>> timetableData = {
     ),
     null, // Tea Break
     const ClassSlot(
-      subjectCode: '1BMATS201',
+      subjectCode: '1BMATS201L',
       subjectName: 'Applied Mathematics Lab',
-      faculty: 'Prof. Deepa R Acharya',
+      faculty: 'Prof. Deepa R Acharya & Prof. Pallavi',
       room: 'A-308',
       startTime: '10:30',
       endTime: '11:30',
       type: SubjectType.lab,
     ),
-    const ClassSlot(
-      subjectCode: '1BMATS201',
-      subjectName: 'Applied Mathematics Lab',
-      faculty: 'Prof. Deepa R Acharya',
-      room: 'A-308',
-      startTime: '11:30',
-      endTime: '12:30',
-      type: SubjectType.lab,
-    ),
+    // Slot 4 (11:30) empty — Maths Lab now single block
     null, // Lunch Break
     const ClassSlot(
       subjectCode: '1BIECK205',
@@ -152,9 +136,12 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '15:30',
       type: SubjectType.programming,
     ),
-    null, // 15:30 empty
+    // Slot 8 (15:30) removed
   ],
 
+  // ── WEDNESDAY ───────────────────────────────────────────────────────
+  // Changes: Chem Lab merged to 1 block, Lunch Break removed,
+  //          free afternoon slots removed
   'Wednesday': [
     const ClassSlot(
       subjectCode: '1BMATS201',
@@ -184,21 +171,13 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '11:30',
       type: SubjectType.lab,
     ),
-    const ClassSlot(
-      subjectCode: '1BCHESL206',
-      subjectName: 'Applied Chemistry Lab',
-      faculty: 'Dr. Anitha Sudhir',
-      room: 'G-202',
-      startTime: '11:30',
-      endTime: '12:30',
-      type: SubjectType.lab,
-    ),
-    null, // Lunch Break
-    null, // 13:30 empty
-    null, // 14:30 empty
-    null, // 15:30 empty
+    // Slot 4 (11:30) — Chem Lab now single block, no second block
+    // No Lunch Break on Wednesday
+    // No afternoon slots on Wednesday
   ],
 
+  // ── THURSDAY ────────────────────────────────────────────────────────
+  // Changes: Remove free periods
   'Thursday': [
     null, // 08:00 empty
     const ClassSlot(
@@ -248,9 +227,12 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '15:30',
       type: SubjectType.mathematics,
     ),
-    null, // 15:30 empty
+    // Slot 8 (15:30) removed — no free period
   ],
 
+  // ── FRIDAY ──────────────────────────────────────────────────────────
+  // Changes: Python Lab → single block, Project Lab → single block,
+  //          free periods removed
   'Friday': [
     const ClassSlot(
       subjectCode: '1BPLCSL207',
@@ -261,15 +243,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '09:00',
       type: SubjectType.lab,
     ),
-    const ClassSlot(
-      subjectCode: '1BPLCSL207',
-      subjectName: 'Python Programming Lab',
-      faculty: 'Prof. Susan Shaju',
-      room: 'M-317',
-      startTime: '09:00',
-      endTime: '10:00',
-      type: SubjectType.lab,
-    ),
+    // Slot 1 (09:00) — Python Lab now single block
     null, // Tea Break
     const ClassSlot(
       subjectCode: '1BMATS201',
@@ -299,16 +273,7 @@ final Map<String, List<ClassSlot?>> timetableData = {
       endTime: '14:30',
       type: SubjectType.lab,
     ),
-    const ClassSlot(
-      subjectCode: '1BPBLK209',
-      subjectName: 'Project-Based Learning',
-      faculty: 'Prof. Kavyashree G',
-      room: 'D-012',
-      startTime: '14:30',
-      endTime: '15:30',
-      type: SubjectType.lab,
-    ),
-    null, // 15:30 empty
+    // Slot 7 (14:30) — Project Lab now single block, removed free period
   ],
 };
 

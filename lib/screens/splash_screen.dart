@@ -206,14 +206,29 @@ class _SplashScreenState extends State<SplashScreen>
               bottom: 40,
               left: 0,
               right: 0,
-              child: Text(
-                'Mysore, Karnataka',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.35),
-                  fontSize: 12,
-                  letterSpacing: 1,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    'Mysore, Karnataka',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.35),
+                      fontSize: 12,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Built by Nitin Mahadev',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ).animate(delay: 1200.ms).fadeIn(),
             ),
           ],

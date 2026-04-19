@@ -20,7 +20,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _usnController = TextEditingController();
-  final _sectionController = TextEditingController(text: 'G');
+
+  // Section is frozen to G
+  final String _section = 'G';
+  // Group dropdown: G1, G2, G3
+  String _selectedGroup = 'G1';
 
   bool _isLoading = false;
 
@@ -28,29 +32,23 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _nameController.dispose();
     _usnController.dispose();
-    _sectionController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
-    // Simulate brief processing
     await Future.delayed(const Duration(milliseconds: 600));
-
     final prefs = await PrefsService.getInstance();
     await prefs.saveStudent(
       name: _nameController.text,
       usn: _usnController.text,
-      section: _sectionController.text,
+      section: '$_section - $_selectedGroup',
     );
-
     if (!mounted) return;
     setState(() => _isLoading = false);
-
-    Navigator.of(context).pushReplacement(
+    final navigator = Navigator.of(context);
+    navigator.pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const TimetableScreen(),
         transitionsBuilder: (_, animation, __, child) {
@@ -73,7 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -95,26 +92,18 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               children: [
                 SizedBox(height: size.height * 0.06),
-
-                // Header Section
                 _buildHeader(),
-
                 SizedBox(height: size.height * 0.05),
-
-                // Form Card
                 _buildFormCard(),
-
-                const SizedBox(height: 20),
-
-                // Footer
+                const SizedBox(height: 16),
+                // Academic Year footer
                 Text(
-                  'VVCE Mysore • Academic Year 2024-25',
+                  'VVCE Mysore • Academic Year 2025-26',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.4),
                     fontSize: 11,
                   ),
                 ).animate(delay: 800.ms).fadeIn(),
-
                 const SizedBox(height: 30),
               ],
             ),
@@ -135,9 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
               curve: Curves.elasticOut,
             )
             .fadeIn(duration: 500.ms),
-
         const SizedBox(height: 16),
-
         const Text(
           'VVCE TimeTable',
           style: TextStyle(
@@ -147,9 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
             letterSpacing: 1,
           ),
         ).animate(delay: 200.ms).slideY(begin: 0.4).fadeIn(duration: 400.ms),
-
         const SizedBox(height: 6),
-
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
@@ -188,7 +173,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome text
             const Text(
               'Welcome! 👋',
               style: TextStyle(
@@ -214,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildField(
               controller: _nameController,
               label: 'Full Name',
-              hint: 'e.g., Arjun Kumar',
+              hint: 'e.g., Nitin Mahadev',
               icon: Icons.person_rounded,
               delay: 500,
               validator: (v) {
@@ -230,13 +214,13 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildField(
               controller: _usnController,
               label: 'USN',
-              hint: 'e.g., 4VV23CS001',
+              hint: 'e.g., 4VV24CS001',
               icon: Icons.badge_rounded,
               delay: 600,
               textCapitalization: TextCapitalization.characters,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                LengthLimitingTextInputFormatter(10),
+                LengthLimitingTextInputFormatter(12),
               ],
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Please enter your USN';
@@ -247,23 +231,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 16),
 
-            // Section Field
-            _buildField(
-              controller: _sectionController,
-              label: 'Section',
-              hint: 'G',
-              icon: Icons.group_rounded,
-              delay: 700,
-              textCapitalization: TextCapitalization.characters,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
-                LengthLimitingTextInputFormatter(2),
-              ],
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Please enter your section';
-                return null;
-              },
-            ),
+            // Section — FROZEN to G (read-only display)
+            _buildFrozenSection(delay: 700),
+
+            const SizedBox(height: 16),
+
+            // Group Dropdown — G1, G2, G3
+            _buildGroupDropdown(delay: 750),
 
             const SizedBox(height: 30),
 
@@ -307,11 +281,151 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
               ),
-            ).animate(delay: 800.ms).slideY(begin: 0.4).fadeIn(),
+            ).animate(delay: 850.ms).slideY(begin: 0.4).fadeIn(),
           ],
         ),
       ),
     ).animate(delay: 350.ms).slideY(begin: 0.3).fadeIn(duration: 500.ms);
+  }
+
+  /// Frozen Section field — always shows "G", not editable
+  Widget _buildFrozenSection({required int delay}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Section',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryBlue,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryBlue.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.25)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.group_rounded,
+                  color: AppTheme.primaryBlue,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'G',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryBlue,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Fixed',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).animate(delay: Duration(milliseconds: delay)).slideX(begin: -0.2).fadeIn(duration: 400.ms);
+  }
+
+  /// Group dropdown — G1, G2, G3
+  Widget _buildGroupDropdown({required int delay}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Group',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryBlue,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  color: AppTheme.primaryBlue,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedGroup,
+                    isExpanded: true,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppTheme.primaryBlue,
+                    ),
+                    items: ['G1', 'G2', 'G3']
+                        .map((g) => DropdownMenuItem(
+                              value: g,
+                              child: Text(g),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedGroup = val);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).animate(delay: Duration(milliseconds: delay)).slideX(begin: -0.2).fadeIn(duration: 400.ms);
   }
 
   Widget _buildField({

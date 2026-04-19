@@ -444,10 +444,12 @@ class _TimetableScreenState extends State<TimetableScreen>
           ),
         ),
 
-        // Slot cards
+        // Slot cards — index mapped to timeSlots array safely
         ...slots.asMap().entries.map((entry) {
           final index = entry.key;
           final slot = entry.value;
+          // Guard: only render if index is within timeSlots bounds
+          if (index >= timeSlots.length) return const SizedBox.shrink();
           final timeRange = timeSlots[index];
 
           if (slot == null) {
