@@ -1,53 +1,33 @@
 // lib/data/timetable_data.dart
-// VVCE Mysore - 2nd Semester CSE Section G
-// C-Cycle Timetable dated 12.02.2026, w.e.f 23.02.2026 (V 1.0)
+// VVCE 2nd Sem CSE Section G — C-Cycle w.e.f 23.02.2026
 
 import '../models/timetable_model.dart';
-
-// Legacy timeSlots kept for compatibility
-const List<String> timeSlots = [
-  '08:00 - 09:00',
-  '09:00 - 10:00',
-  '10:00 - 10:30',
-  '10:30 - 11:30',
-  '11:30 - 12:30',
-  '12:30 - 13:30',
-  '13:30 - 14:30',
-  '14:30 - 15:30',
-  '15:30 - 16:30',
-];
-
-const List<String> slotStartTimes = [
-  '08:00', '09:00', '10:00', '10:30', '11:30',
-  '12:30', '13:30', '14:30', '15:30',
-];
-
-const List<String> slotEndTimes = [
-  '09:00', '10:00', '10:30', '11:30', '12:30',
-  '13:30', '14:30', '15:30', '16:30',
-];
 
 const List<String> weekDays = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 ];
 
+// Legacy timeSlots (kept for stats widget)
+const List<String> timeSlots = [
+  '08:00 - 09:00', '09:00 - 10:00', '10:00 - 10:30',
+  '10:30 - 11:30', '11:30 - 12:30', '12:30 - 13:30',
+  '13:30 - 14:30', '14:30 - 15:30', '15:30 - 16:30',
+];
+
+const List<String> slotStartTimes = [
+  '08:00','09:00','10:00','10:30','11:30','12:30','13:30','14:30','15:30',
+];
+const List<String> slotEndTimes = [
+  '09:00','10:00','10:30','11:30','12:30','13:30','14:30','15:30','16:30',
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
-// daySchedules: each day is a List of dynamic entries — either ClassSlot or
-// BreakEntry. Each ClassSlot carries its own startTime/endTime for display.
+// daySchedules — List<dynamic> of ClassSlot | BreakEntry per day
 // ─────────────────────────────────────────────────────────────────────────────
 
 final Map<String, List<dynamic>> daySchedules = {
 
   // ── MONDAY ────────────────────────────────────────────────────────────────
-  // 09:00-10:00 AI
-  // Tea Break 10:00-10:30
-  // 10:30-11:30 Python
-  // 11:30-12:30 Chemistry
-  // Lunch 12:30-13:30
-  // 13:30-15:30 Communicative Skills-II (2 hrs, single card)
-  //   Faculty: Prof. Niranjan Sarja & Prof. Kirti Gupta
-  //   Rooms: M-501, AB-07
-  // No free period labels
   'Monday': [
     const ClassSlot(
       subjectCode: '1BAIAK204',
@@ -78,6 +58,8 @@ final Map<String, List<dynamic>> daySchedules = {
       type: SubjectType.chemistry,
     ),
     const BreakEntry(timeRange: '12:30 - 13:30', isLunch: true),
+    // Communicative Skills-II: 13:30-15:30 (2 hrs)
+    // Faculty: Prof. Niranjan Sarja + Prof. Kirti Gupta | Rooms: M-501 / AB-07
     const ClassSlot(
       subjectCode: '1BENGK208',
       subjectName: 'Communicative Skills -II',
@@ -90,14 +72,6 @@ final Map<String, List<dynamic>> daySchedules = {
   ],
 
   // ── TUESDAY ───────────────────────────────────────────────────────────────
-  // 08:00-09:00 Maths
-  // 09:00-10:00 Chemistry
-  // Tea Break 10:00-10:30
-  // 10:30-12:30 Maths Lab (2 hrs, single card) — 1BMATS201L
-  //   Faculty: Prof. Deepa R Acharya & Prof. Pallavi
-  // Lunch 12:30-13:30
-  // 13:30-14:30 Electronics
-  // 14:30-15:30 Python
   'Tuesday': [
     const ClassSlot(
       subjectCode: '1BMATS201',
@@ -118,6 +92,7 @@ final Map<String, List<dynamic>> daySchedules = {
       type: SubjectType.chemistry,
     ),
     const BreakEntry(timeRange: '10:00 - 10:30', isTeaBreak: true),
+    // Maths Lab: 10:30-12:30 (2 hrs, single card)
     const ClassSlot(
       subjectCode: '1BMATS201L',
       subjectName: 'Applied Mathematics Lab',
@@ -149,11 +124,7 @@ final Map<String, List<dynamic>> daySchedules = {
   ],
 
   // ── WEDNESDAY ─────────────────────────────────────────────────────────────
-  // 08:00-09:00 Maths
-  // 09:00-10:00 Electronics
-  // Tea Break 10:00-10:30
-  // 10:30-11:30 Chemistry Lab (single card)
-  // No lunch, no afternoon
+  // Chem Lab 10:30-12:30 (2 hrs) — group-based faculty & room
   'Wednesday': [
     const ClassSlot(
       subjectCode: '1BMATS201',
@@ -174,26 +145,29 @@ final Map<String, List<dynamic>> daySchedules = {
       type: SubjectType.electronics,
     ),
     const BreakEntry(timeRange: '10:00 - 10:30', isTeaBreak: true),
-    const ClassSlot(
+    // Applied Chemistry Lab — 10:30 to 12:30 — group-specific faculty & room
+    ClassSlot(
       subjectCode: '1BCHESL206',
       subjectName: 'Applied Chemistry Lab',
-      faculty: 'Dr. Anitha Sudhir',
-      room: 'G-202',
+      faculty: 'Dr. Anitha Sudhir',      // default (G1)
+      room: 'G-202',                      // default (G1)
       startTime: '10:30',
-      endTime: '11:30',
+      endTime: '12:30',
       type: SubjectType.lab,
+      groupFaculty: const {
+        'G1': 'Dr. Anitha Sudhir',
+        'G2': 'Dr. Vrushabendra B',
+        'G3': 'Dr. Sowmya P T',
+      },
+      groupRoom: const {
+        'G1': 'G-202',
+        'G2': 'G-201',
+        'G3': 'G-003',
+      },
     ),
   ],
 
   // ── THURSDAY ──────────────────────────────────────────────────────────────
-  // 09:00-10:00 Kannada
-  // Tea Break 10:00-10:30
-  // 10:30-11:30 AI
-  // 11:30-12:30 Electronics
-  // Lunch 12:30-13:30
-  // 13:30-14:30 Chemistry
-  // 14:30-15:30 Maths
-  // No free period labels (08:00 slot removed)
   'Thursday': [
     const ClassSlot(
       subjectCode: '1BKSKK210',
@@ -245,12 +219,12 @@ final Map<String, List<dynamic>> daySchedules = {
   ],
 
   // ── FRIDAY ────────────────────────────────────────────────────────────────
-  // 08:00-10:00 Python Lab (2 hrs, single card) — 1BPLCSL207
-  // Tea Break 10:00-10:30
-  // 10:30-11:30 Maths
-  // 11:30-12:30 Python
-  // Lunch 12:30-13:30
-  // 13:30-14:30 Project-Based Learning (single card)
+  // Python Lab: 08:00-10:00 (2 hrs, single card)
+  // Tea Break: 10:00-10:30
+  // Maths: 10:30-11:30
+  // Python: 11:30-12:30
+  // Lunch: 12:30-13:30
+  // Project Lab: 13:30-14:30 (single card)
   'Friday': [
     const ClassSlot(
       subjectCode: '1BPLCSL207',
@@ -281,11 +255,12 @@ final Map<String, List<dynamic>> daySchedules = {
       type: SubjectType.programming,
     ),
     const BreakEntry(timeRange: '12:30 - 13:30', isLunch: true),
+    // Project-Based Learning — 3 faculty, room M-402
     const ClassSlot(
       subjectCode: '1BPBLK209',
       subjectName: 'Project-Based Learning',
-      faculty: 'Prof. Kavyashree G',
-      room: 'D-012',
+      faculty: 'Prof. Sathwik Shetty\nProf. Uday\nProf. Keerthana',
+      room: 'M-402',
       startTime: '13:30',
       endTime: '14:30',
       type: SubjectType.lab,
@@ -293,8 +268,8 @@ final Map<String, List<dynamic>> daySchedules = {
   ],
 };
 
-// Legacy map kept for stats_widget compatibility
+// Legacy map for stats_widget compatibility
 final Map<String, List<ClassSlot?>> timetableData = {
-  for (final entry in daySchedules.entries)
-    entry.key: entry.value.map((e) => e is ClassSlot ? e : null).toList(),
+  for (final e in daySchedules.entries)
+    e.key: e.value.map((s) => s is ClassSlot ? s : null).toList(),
 };

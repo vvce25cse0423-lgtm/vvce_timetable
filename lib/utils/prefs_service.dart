@@ -23,14 +23,17 @@ class PrefsService {
     required String name,
     required String usn,
     required String section,
+    String group = 'G1',
   }) async {
     await _prefs!.setString(AppConstants.keyStudentName, name.trim());
     await _prefs!.setString(AppConstants.keyStudentUSN, usn.trim().toUpperCase());
     await _prefs!.setString(AppConstants.keyStudentSection, section.trim().toUpperCase());
+    await _prefs!.setString('student_group', group.trim().toUpperCase());
     await _prefs!.setBool(AppConstants.keyIsLoggedIn, true);
   }
 
   String get studentName => _prefs!.getString(AppConstants.keyStudentName) ?? '';
+  String get studentGroup => _prefs!.getString('student_group') ?? 'G1';
   String get studentUSN => _prefs!.getString(AppConstants.keyStudentUSN) ?? '';
   String get studentSection => _prefs!.getString(AppConstants.keyStudentSection) ?? '';
   bool get isLoggedIn => _prefs!.getBool(AppConstants.keyIsLoggedIn) ?? false;
@@ -49,6 +52,7 @@ class PrefsService {
     await _prefs!.remove(AppConstants.keyStudentName);
     await _prefs!.remove(AppConstants.keyStudentUSN);
     await _prefs!.remove(AppConstants.keyStudentSection);
+    await _prefs!.remove('student_group');
     await _prefs!.setBool(AppConstants.keyIsLoggedIn, false);
   }
 }

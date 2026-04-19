@@ -173,7 +173,7 @@ class SubjectCard extends StatelessWidget {
                                         ? Colors.white60
                                         : Colors.black45,
                                   ),
-                                  maxLines: 2,
+                                  maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),

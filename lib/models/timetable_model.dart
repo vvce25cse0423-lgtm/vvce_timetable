@@ -12,6 +12,10 @@ class ClassSlot {
   final String startTime;
   final String endTime;
   final SubjectType type;
+  /// Optional per-group faculty overrides: {'G1': 'Dr. X', 'G2': 'Dr. Y', 'G3': 'Dr. Z'}
+  final Map<String, String>? groupFaculty;
+  /// Optional per-group room overrides: {'G1': 'G-202', 'G2': 'G-201', 'G3': 'G-003'}
+  final Map<String, String>? groupRoom;
 
   const ClassSlot({
     required this.subjectCode,
@@ -21,7 +25,17 @@ class ClassSlot {
     required this.startTime,
     required this.endTime,
     required this.type,
+    this.groupFaculty,
+    this.groupRoom,
   });
+
+  /// Returns faculty for a given group (falls back to default faculty)
+  String facultyForGroup(String group) =>
+      groupFaculty?[group] ?? faculty;
+
+  /// Returns room for a given group (falls back to default room)
+  String roomForGroup(String group) =>
+      groupRoom?[group] ?? room;
 
   /// Returns true if this class is currently ongoing
   bool isOngoing() {

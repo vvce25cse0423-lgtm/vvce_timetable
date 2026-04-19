@@ -43,7 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.saveStudent(
       name: _nameController.text,
       usn: _usnController.text,
-      section: '$_section - $_selectedGroup',
+      section: _section,
+      group: _selectedGroup,
     );
     if (!mounted) return;
     setState(() => _isLoading = false);
