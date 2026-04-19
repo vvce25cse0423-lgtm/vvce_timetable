@@ -25,24 +25,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
 
-  // Random example hints from the real student list
+  // Fictional example hints — NOT real students, just for guidance
   static const _nameHints = [
-    'e.g., NITIN MAHADEV B K',
-    'e.g., PREETHAM M N',
-    'e.g., PALLAVI AMBIGER',
-    'e.g., RAKESH SHREEKANTH M M',
-    'e.g., POORVIKA M P',
-    'e.g., PRIYANKA AMARAVATHI',
-    'e.g., NIRANJAN SWAMY M',
+    'e.g., ARJUN KUMAR S',
+    'e.g., DIVYA SHARMA R',
+    'e.g., RAHUL VERMA K',
+    'e.g., SNEHA PATIL M',
+    'e.g., KIRAN RAJ B',
+    'e.g., MEENA LAKSHMI T',
+    'e.g., SURESH BABU N',
   ];
   static const _usnHints = [
-    'e.g., 4TV25CS131',
-    'e.g., 4EV25CS140',
-    'e.g., 4TV25CS133',
-    'e.g., 4TV25CS162',
-    'e.g., 4EV25CS135',
-    'e.g., 4TV25CS157',
-    'e.g., 4VV25CS136',
+    'e.g., 4XX25CS001',
+    'e.g., 4YY25CS002',
+    'e.g., 4ZZ25CS003',
+    'e.g., 4AB25CS004',
+    'e.g., 4CD25CS005',
+    'e.g., 4EF25CS006',
+    'e.g., 4GH25CS007',
   ];
 
   @override

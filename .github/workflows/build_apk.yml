@@ -8,11 +8,11 @@ on:
   workflow_dispatch:
 
 # ─────────────────────────────────────────────────────────────────────────────
-# JOB 1: Android — Universal Release APK
+# JOB 1 — Android Universal APK
 # ─────────────────────────────────────────────────────────────────────────────
 jobs:
   build-android:
-    name: 🤖 Build Android APK
+    name: 🤖 Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -44,11 +44,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze code
+      - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         continue-on-error: true
 
-      - name: Build Universal Release APK
+      - name: Build Universal APK
         run: flutter build apk --release
 
       - name: Rename APK
@@ -56,14 +56,14 @@ jobs:
           mv build/app/outputs/flutter-apk/app-release.apk \
              build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: VVCE_Timetable_Android_APK
           path: build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk
           retention-days: 30
 
-      - name: Release APK on tag
+      - name: Release on tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
@@ -71,40 +71,23 @@ jobs:
           name: VVCE Timetable ${{ github.ref_name }}
           body: |
             ## 📱 VVCE Timetable ${{ github.ref_name }}
-
-            ### Android
-            **VVCE_Timetable_v${{ github.run_number }}_Android.apk** — Universal APK
-
-            ### iOS
-            See the iOS IPA artifact from the iOS build job.
-
-            ### Install Android
-            1. Download the APK
-            2. Enable "Install from unknown sources" in Android Settings
-            3. Open and install
-
-            ### Install iOS (IPA)
-            Use AltStore, Sideloadly, or install via Xcode / TestFlight
+            ### Android — Download & install the APK
+            Enable "Install from unknown sources" in Android Settings first.
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Android Build Summary
+      - name: Summary
         run: |
           APK="build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk"
-          SIZE=$(du -sh "$APK" | cut -f1)
-          echo "## ✅ Android APK Built!" >> $GITHUB_STEP_SUMMARY
-          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| VVCE_Timetable_v${{ github.run_number }}_Android.apk | $SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Android APK Built — $(du -sh $APK | cut -f1)" >> $GITHUB_STEP_SUMMARY
 
 # ─────────────────────────────────────────────────────────────────────────────
-# JOB 2: iOS — IPA (unsigned, for sideloading via AltStore / Sideloadly)
-# Requires macOS runner with Xcode
+# JOB 2 — iOS Unsigned IPA (sideloadable via AltStore / Sideloadly)
 # ─────────────────────────────────────────────────────────────────────────────
   build-ios:
-    name: 🍎 Build iOS IPA
+    name: 🍎 iOS IPA
     runs-on: macos-latest
 
     steps:
@@ -130,26 +113,37 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
-      - name: Install CocoaPods dependencies
-        working-directory: ios
+      # ── Regenerate iOS folder if xcodeproj is missing or incomplete ──────
+      - name: Ensure iOS project exists
         run: |
-          gem install cocoapods --no-document
-          pod install --repo-update
+          if [ ! -f "ios/Runner.xcodeproj/project.pbxproj" ]; then
+            echo "project.pbxproj missing — regenerating iOS project"
+            flutter create --platforms=ios --org com.vvce .
+          else
+            echo "project.pbxproj found ✅"
+          fi
+
+      - name: Select Xcode version
+        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods --no-document
+          cd ios && pod install --repo-update
         continue-on-error: true
 
-      - name: Build iOS (no codesign — unsigned IPA for sideloading)
-        run: |
-          flutter build ios --release --no-codesign
+      - name: Build iOS (unsigned — no codesign)
+        run: flutter build ios --release --no-codesign
 
-      - name: Package unsigned IPA
+      - name: Package IPA
         run: |
           mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -r VVCE_Timetable_v${{ github.run_number }}_iOS.ipa Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/Runner.app
+          zip -r "VVCE_Timetable_v${{ github.run_number }}_iOS.ipa" Payload
           rm -rf Payload
-          echo "IPA created successfully"
+          ls -lh "VVCE_Timetable_v${{ github.run_number }}_iOS.ipa"
 
-      - name: Upload IPA Artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: VVCE_Timetable_iOS_IPA
@@ -163,25 +157,16 @@ jobs:
           files: VVCE_Timetable_v${{ github.run_number }}_iOS.ipa
           name: VVCE Timetable ${{ github.ref_name }}
           body: |
-            ### iOS IPA
-            This is an **unsigned IPA** for sideloading.
-
-            **Install options:**
-            - 🟣 **AltStore** — altstore.io (free, renews every 7 days)
-            - 🔵 **Sideloadly** — sideloadly.io (free, Apple ID required)
-            - 🟠 **Scarlet / TrollStore** — for jailbroken or TrollStore devices
+            ## 🍎 iOS IPA — Unsigned (sideload only)
+            Install with **AltStore** (altstore.io) or **Sideloadly** (sideloadly.io).
+            No jailbreak required.
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: iOS Build Summary
+      - name: Summary
         run: |
           IPA="VVCE_Timetable_v${{ github.run_number }}_iOS.ipa"
-          SIZE=$(du -sh "$IPA" | cut -f1)
-          echo "## ✅ iOS IPA Built!" >> $GITHUB_STEP_SUMMARY
-          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| VVCE_Timetable_v${{ github.run_number }}_iOS.ipa | $SIZE |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Install with **AltStore** or **Sideloadly** — no jailbreak needed" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ iOS IPA Built — $(du -sh $IPA | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "Install via **AltStore** or **Sideloadly**" >> $GITHUB_STEP_SUMMARY
