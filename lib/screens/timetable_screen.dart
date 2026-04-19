@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui' show FontFeature;
 import '../data/timetable_data.dart';
+import '../models/timetable_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/prefs_service.dart';
 import '../widgets/day_selector.dart';
@@ -395,8 +396,9 @@ class _TimetableScreenState extends State<TimetableScreen>
   }
 
   Widget _buildDaySchedule(String dayName, bool isDark, bool isActive) {
-    final slots = timetableData[dayName] ?? [];
+    final entries = daySchedules[dayName] ?? [];
     final isToday = _isTodayName(dayName);
+    final classCount = entries.whereType<ClassSlot>().length;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -434,7 +436,7 @@ class _TimetableScreenState extends State<TimetableScreen>
               ],
               const Spacer(),
               Text(
-                '${slots.where((s) => s != null).length} classes',
+                '\$classCount classes',
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.white38 : Colors.black38,
@@ -444,34 +446,33 @@ class _TimetableScreenState extends State<TimetableScreen>
           ),
         ),
 
-        // Slot cards — index mapped to timeSlots array safely
-        ...slots.asMap().entries.map((entry) {
-          final index = entry.key;
-          final slot = entry.value;
-          // Guard: only render if index is within timeSlots bounds
-          if (index >= timeSlots.length) return const SizedBox.shrink();
-          final timeRange = timeSlots[index];
+        // Render each entry — DayEntry carries its own time range & break type
+        ...entries.asMap().entries.map((mapEntry) {
+          final index = mapEntry.key;
+          final entry = mapEntry.value;
 
-          if (slot == null) {
-            // index 2 = Tea Break, index 5 = Lunch Break, others = Free
-            final isLunch = index == 5;
-            final isTeaBreak = index == 2;
+          if (entry is BreakEntry) {
             return BreakCard(
-              timeRange: timeRange,
-              isLunch: isLunch,
-              isTeaBreak: isTeaBreak,
+              timeRange: entry.timeRange,
+              isLunch: entry.isLunch,
+              isTeaBreak: entry.isTeaBreak,
               isDark: isDark,
               animationIndex: index,
             );
           }
 
-          return SubjectCard(
-            slot: slot,
-            timeRange: timeRange,
-            isOngoing: isToday && slot.isOngoing(),
-            isDark: isDark,
-            animationIndex: index,
-          );
+          if (entry is ClassSlot) {
+            final timeRange = '\${entry.startTime} - \${entry.endTime}';
+            return SubjectCard(
+              slot: entry,
+              timeRange: timeRange,
+              isOngoing: isToday && entry.isOngoing(),
+              isDark: isDark,
+              animationIndex: index,
+            );
+          }
+
+          return const SizedBox.shrink();
         }),
       ],
     );

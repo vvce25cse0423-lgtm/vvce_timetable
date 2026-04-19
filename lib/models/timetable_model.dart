@@ -65,6 +65,19 @@ enum SubjectType {
   free,
 }
 
+
+/// A break slot (Tea Break, Lunch, etc.) used in daySchedules
+class BreakEntry {
+  final String timeRange;
+  final bool isLunch;
+  final bool isTeaBreak;
+
+  const BreakEntry({
+    required this.timeRange,
+    this.isLunch = false,
+    this.isTeaBreak = false,
+  });
+}
 /// Student data model
 class Student {
   final String name;
