@@ -116,7 +116,7 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 6),
 
                   const Text(
-                    'Vivekananda Vidyavardhaka\nCollege of Engineering',
+                    'Vidya Vardhaka College\nof Engineering',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white70,

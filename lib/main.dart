@@ -4,11 +4,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'utils/app_theme.dart';
+import 'utils/notification_service.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized before using plugins
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Init notification service
+  await NotificationService().init();
 
   // Set preferred orientations - portrait only for consistent layout
   await SystemChrome.setPreferredOrientations([

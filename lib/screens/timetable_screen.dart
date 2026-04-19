@@ -2,6 +2,7 @@
 // Main timetable screen — group-aware, live class indicator, auto today tab
 
 import 'dart:async';
+import '../utils/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../data/timetable_data.dart';
@@ -68,6 +69,8 @@ class _TimetableScreenState extends State<TimetableScreen>
       _studentGroup  = prefs.studentGroup;
       _isDark        = prefs.isDarkMode;
     });
+    // Schedule today's notifications for returning users
+    await NotificationService().scheduleNotificationsForToday();
   }
 
   Future<void> _toggleTheme() async {

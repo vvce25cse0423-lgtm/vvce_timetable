@@ -262,7 +262,7 @@ final Map<String, List<dynamic>> daySchedules = {
       faculty: 'Prof. Sathwik Shetty\nProf. Uday\nProf. Keerthana',
       room: 'M-402',
       startTime: '13:30',
-      endTime: '14:30',
+      endTime: '15:30',
       type: SubjectType.lab,
     ),
   ],
