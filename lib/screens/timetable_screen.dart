@@ -462,7 +462,7 @@ class _TimetableScreenState extends State<TimetableScreen>
           }
 
           if (entry is ClassSlot) {
-            final timeRange = '\${entry.startTime} - \${entry.endTime}';
+            final timeRange = '${entry.startTime} - ${entry.endTime}';
             return SubjectCard(
               slot: entry,
               timeRange: timeRange,
