@@ -25,6 +25,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
 
+  // Random example hints from the real student list
+  static const _nameHints = [
+    'e.g., NITIN MAHADEV B K',
+    'e.g., PREETHAM M N',
+    'e.g., PALLAVI AMBIGER',
+    'e.g., RAKESH SHREEKANTH M M',
+    'e.g., POORVIKA M P',
+    'e.g., PRIYANKA AMARAVATHI',
+    'e.g., NIRANJAN SWAMY M',
+  ];
+  static const _usnHints = [
+    'e.g., 4TV25CS131',
+    'e.g., 4EV25CS140',
+    'e.g., 4TV25CS133',
+    'e.g., 4TV25CS162',
+    'e.g., 4EV25CS135',
+    'e.g., 4TV25CS157',
+    'e.g., 4VV25CS136',
+  ];
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -337,7 +357,7 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _nameCtrl,
               textCapitalization: TextCapitalization.characters,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
-              decoration: _inputDecoration('e.g., NITIN MAHADEV B K', Icons.person_rounded),
+              decoration: _inputDecoration(_nameHints[DateTime.now().second % _nameHints.length], Icons.person_rounded),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Please enter your full name';
                 if (v.trim().length < 2) return 'Name is too short';
@@ -358,7 +378,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 LengthLimitingTextInputFormatter(12),
               ],
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
-              decoration: _inputDecoration('e.g., 4TV25CS131', Icons.badge_rounded),
+              decoration: _inputDecoration(_usnHints[DateTime.now().second % _usnHints.length], Icons.badge_rounded),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Please enter your USN';
                 if (v.trim().length < 8) return 'USN seems too short';

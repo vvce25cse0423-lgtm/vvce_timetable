@@ -270,6 +270,13 @@ class _SplashScreenState extends State<SplashScreen> {
                       style: TextStyle(
                           color: Colors.white.withOpacity(0.5),
                           fontSize: 11, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text('v1.0.0',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.35),
+                          fontSize: 10, letterSpacing: 1.5,
+                          fontWeight: FontWeight.w500)),
                 ],
               ).animate(delay: 1200.ms).fadeIn(),
             ),

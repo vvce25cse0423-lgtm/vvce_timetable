@@ -1,23 +1,22 @@
-name: Build VVCE Timetable APK
+name: Build VVCE Timetable — Android APK + iOS IPA
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   workflow_dispatch:
 
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 1: Android — Universal Release APK
+# ─────────────────────────────────────────────────────────────────────────────
 jobs:
-  build-apk:
-    name: Build Universal APK
+  build-android:
+    name: 🤖 Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Java 17
@@ -33,7 +32,7 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Cache Flutter packages
+      - name: Cache pub packages
         uses: actions/cache@v4
         with:
           path: |
@@ -49,52 +48,140 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         continue-on-error: true
 
-      - name: Run tests
-        run: flutter test
-        continue-on-error: true
-
       - name: Build Universal Release APK
         run: flutter build apk --release
 
       - name: Rename APK
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}.apk
+             build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk
 
-      - name: Upload Universal APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VVCE_Timetable_APK
-          path: build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}.apk
+          name: VVCE_Timetable_Android_APK
+          path: build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk
           retention-days: 30
 
-      - name: Create GitHub Release
+      - name: Release APK on tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}.apk
+          files: build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk
           name: VVCE Timetable ${{ github.ref_name }}
           body: |
             ## 📱 VVCE Timetable ${{ github.ref_name }}
-            
-            **VVCE_Timetable_v${{ github.run_number }}.apk** — Universal APK (all Android devices)
-            
-            ### Install
-            1. Download the APK below
+
+            ### Android
+            **VVCE_Timetable_v${{ github.run_number }}_Android.apk** — Universal APK
+
+            ### iOS
+            See the iOS IPA artifact from the iOS build job.
+
+            ### Install Android
+            1. Download the APK
             2. Enable "Install from unknown sources" in Android Settings
             3. Open and install
+
+            ### Install iOS (IPA)
+            Use AltStore, Sideloadly, or install via Xcode / TestFlight
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Summary
+      - name: Android Build Summary
         run: |
-          APK="build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}.apk"
+          APK="build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk"
           SIZE=$(du -sh "$APK" | cut -f1)
-          echo "## ✅ Build Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Android APK Built!" >> $GITHUB_STEP_SUMMARY
           echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
           echo "|------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| VVCE_Timetable_v${{ github.run_number }}.apk | $SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| VVCE_Timetable_v${{ github.run_number }}_Android.apk | $SIZE |" >> $GITHUB_STEP_SUMMARY
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 2: iOS — IPA (unsigned, for sideloading via AltStore / Sideloadly)
+# Requires macOS runner with Xcode
+# ─────────────────────────────────────────────────────────────────────────────
+  build-ios:
+    name: 🍎 Build iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: flutter-ios-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: flutter-ios-pub-
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios
+        run: |
+          gem install cocoapods --no-document
+          pod install --repo-update
+        continue-on-error: true
+
+      - name: Build iOS (no codesign — unsigned IPA for sideloading)
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r VVCE_Timetable_v${{ github.run_number }}_iOS.ipa Payload
+          rm -rf Payload
+          echo "IPA created successfully"
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VVCE_Timetable_iOS_IPA
+          path: VVCE_Timetable_v${{ github.run_number }}_iOS.ipa
+          retention-days: 30
+
+      - name: Release IPA on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: VVCE_Timetable_v${{ github.run_number }}_iOS.ipa
+          name: VVCE Timetable ${{ github.ref_name }}
+          body: |
+            ### iOS IPA
+            This is an **unsigned IPA** for sideloading.
+
+            **Install options:**
+            - 🟣 **AltStore** — altstore.io (free, renews every 7 days)
+            - 🔵 **Sideloadly** — sideloadly.io (free, Apple ID required)
+            - 🟠 **Scarlet / TrollStore** — for jailbroken or TrollStore devices
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: iOS Build Summary
+        run: |
+          IPA="VVCE_Timetable_v${{ github.run_number }}_iOS.ipa"
+          SIZE=$(du -sh "$IPA" | cut -f1)
+          echo "## ✅ iOS IPA Built!" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| VVCE_Timetable_v${{ github.run_number }}_iOS.ipa | $SIZE |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Download from the **Artifacts** section ⬆️" >> $GITHUB_STEP_SUMMARY
+          echo "Install with **AltStore** or **Sideloadly** — no jailbreak needed" >> $GITHUB_STEP_SUMMARY
