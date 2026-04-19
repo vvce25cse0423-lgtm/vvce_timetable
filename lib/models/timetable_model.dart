@@ -61,6 +61,7 @@ enum SubjectType {
   english,
   lab,
   physicalEducation,
+  kannada,
   free,
 }
 

@@ -451,10 +451,13 @@ class _TimetableScreenState extends State<TimetableScreen>
           final timeRange = timeSlots[index];
 
           if (slot == null) {
-            // Lunch is slot index 5
+            // index 2 = Tea Break, index 5 = Lunch Break, others = Free
+            final isLunch = index == 5;
+            final isTeaBreak = index == 2;
             return BreakCard(
               timeRange: timeRange,
-              isLunch: index == 5,
+              isLunch: isLunch,
+              isTeaBreak: isTeaBreak,
               isDark: isDark,
               animationIndex: index,
             );

@@ -270,6 +270,7 @@ class SubjectCard extends StatelessWidget {
 class BreakCard extends StatelessWidget {
   final String timeRange;
   final bool isLunch;
+  final bool isTeaBreak;
   final bool isDark;
   final int animationIndex;
 
@@ -277,6 +278,7 @@ class BreakCard extends StatelessWidget {
     super.key,
     required this.timeRange,
     required this.isLunch,
+    this.isTeaBreak = false,
     required this.isDark,
     this.animationIndex = 0,
   });
@@ -303,13 +305,17 @@ class BreakCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              isLunch ? Icons.lunch_dining_rounded : Icons.free_breakfast_rounded,
+              isLunch
+                  ? Icons.lunch_dining_rounded
+                  : isTeaBreak
+                      ? Icons.coffee_rounded
+                      : Icons.free_breakfast_rounded,
               color: isDark ? Colors.white38 : Colors.black38,
               size: 20,
             ),
             const SizedBox(width: 10),
             Text(
-              isLunch ? 'Lunch Break' : 'Free Period',
+              isLunch ? 'Lunch Break' : isTeaBreak ? 'Tea Break' : 'Free Period',
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? Colors.white38 : Colors.black38,

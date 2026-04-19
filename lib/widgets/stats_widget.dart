@@ -129,6 +129,8 @@ class WeeklyStatsWidget extends StatelessWidget {
         return 'PE';
       case SubjectType.free:
         return 'FREE';
+      case SubjectType.kannada:
+        return 'KAN';
     }
   }
 }

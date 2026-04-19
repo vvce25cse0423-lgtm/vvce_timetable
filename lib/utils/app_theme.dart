@@ -25,6 +25,7 @@ class AppTheme {
     SubjectType.lab: Color(0xFF8D6E63),
     SubjectType.physicalEducation: Color(0xFF039BE5),
     SubjectType.free: Color(0xFF90A4AE),
+    SubjectType.kannada: Color(0xFFAD1457),
   };
 
   // Subject Colors Dark Mode (slightly lighter)
@@ -38,6 +39,7 @@ class AppTheme {
     SubjectType.lab: Color(0xFFA1887F),
     SubjectType.physicalEducation: Color(0xFF29B6F6),
     SubjectType.free: Color(0xFFB0BEC5),
+    SubjectType.kannada: Color(0xFFF06292),
   };
 
   static Color getSubjectColor(SubjectType type, bool isDark) {
@@ -66,6 +68,8 @@ class AppTheme {
         return Icons.sports_soccer_rounded;
       case SubjectType.free:
         return Icons.free_breakfast_rounded;
+      case SubjectType.kannada:
+        return Icons.translate_rounded;
     }
   }
 
