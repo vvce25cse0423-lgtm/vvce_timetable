@@ -81,10 +81,13 @@ jobs:
       - name: Summary
         run: |
           APK="build/app/outputs/flutter-apk/VVCE_Timetable_v${{ github.run_number }}_Android.apk"
-          echo "## ✅ Android APK Built — $(du -sh $APK | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Android APK — $(du -sh $APK | cut -f1)" >> $GITHUB_STEP_SUMMARY
 
 # ─────────────────────────────────────────────────────────────────────────────
-# JOB 2 — iOS Unsigned IPA (sideloadable via AltStore / Sideloadly)
+# JOB 2 — iOS Unsigned IPA
+# Strategy: flutter create generates a valid Xcode project, then we overlay
+# our custom lib/, assets/, android/, and iOS customisations on top.
+# This avoids committing a hand-crafted project.pbxproj that Xcode rejects.
 # ─────────────────────────────────────────────────────────────────────────────
   build-ios:
     name: 🍎 iOS IPA
@@ -110,31 +113,123 @@ jobs:
           key: flutter-ios-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: flutter-ios-pub-
 
-      - name: Install Flutter dependencies
+      # ── Step 1: Create a fresh valid Flutter project in a temp dir ────────
+      - name: Generate fresh Flutter iOS project scaffold
+        run: |
+          flutter create \
+            --org com.vvce \
+            --project-name vvce_timetable \
+            --platforms ios \
+            /tmp/vvce_fresh
+          echo "✅ Fresh scaffold created"
+          ls /tmp/vvce_fresh/ios/Runner.xcodeproj/
+
+      # ── Step 2: Copy fresh iOS scaffold into our repo ─────────────────────
+      - name: Overlay fresh iOS scaffold onto repo
+        run: |
+          # Remove any broken or incomplete ios/ Xcode project files
+          rm -rf ios/Runner.xcodeproj
+          rm -rf ios/Runner.xcworkspace
+          rm -f ios/Runner/GeneratedPluginRegistrant.h
+          rm -f ios/Runner/GeneratedPluginRegistrant.m
+          rm -f ios/Runner/Runner-Bridging-Header.h
+          rm -rf ios/RunnerTests
+          rm -f ios/Runner/Base.lproj/Main.storyboard
+          rm -f ios/Runner/Base.lproj/LaunchScreen.storyboard
+          rm -f ios/Flutter/AppFrameworkInfo.plist
+
+          # Copy the Flutter-generated valid Xcode project structure
+          cp -r /tmp/vvce_fresh/ios/Runner.xcodeproj  ios/Runner.xcodeproj
+          cp -r /tmp/vvce_fresh/ios/Runner.xcworkspace ios/Runner.xcworkspace
+          cp -r /tmp/vvce_fresh/ios/RunnerTests        ios/RunnerTests
+          cp    /tmp/vvce_fresh/ios/Runner/Runner-Bridging-Header.h \
+                ios/Runner/Runner-Bridging-Header.h
+          cp    /tmp/vvce_fresh/ios/Runner/GeneratedPluginRegistrant.h \
+                ios/Runner/GeneratedPluginRegistrant.h
+          cp    /tmp/vvce_fresh/ios/Runner/GeneratedPluginRegistrant.m \
+                ios/Runner/GeneratedPluginRegistrant.m
+          cp    /tmp/vvce_fresh/ios/Runner/AppDelegate.swift \
+                ios/Runner/AppDelegate.swift
+          mkdir -p ios/Runner/Base.lproj
+          cp    /tmp/vvce_fresh/ios/Runner/Base.lproj/Main.storyboard \
+                ios/Runner/Base.lproj/Main.storyboard
+          cp    /tmp/vvce_fresh/ios/Runner/Base.lproj/LaunchScreen.storyboard \
+                ios/Runner/Base.lproj/LaunchScreen.storyboard
+          cp    /tmp/vvce_fresh/ios/Flutter/AppFrameworkInfo.plist \
+                ios/Flutter/AppFrameworkInfo.plist
+
+          echo "✅ iOS scaffold overlaid. Current ios/ structure:"
+          find ios -name "*.pbxproj" -o -name "*.swift" -o -name "*.plist" | sort
+
+      # ── Step 3: Apply our custom Info.plist (bundle ID, notifications) ────
+      - name: Apply custom Info.plist
+        run: |
+          cat > ios/Runner/Info.plist << 'PLIST_EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleDevelopmentRegion</key>
+            <string>$(DEVELOPMENT_LANGUAGE)</string>
+            <key>CFBundleDisplayName</key>
+            <string>VVCE TimeTable</string>
+            <key>CFBundleExecutable</key>
+            <string>$(EXECUTABLE_NAME)</string>
+            <key>CFBundleIdentifier</key>
+            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundleName</key>
+            <string>vvce_timetable</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>$(FLUTTER_BUILD_NAME)</string>
+            <key>CFBundleVersion</key>
+            <string>$(FLUTTER_BUILD_NUMBER)</string>
+            <key>LSRequiresIPhoneOS</key>
+            <true/>
+            <key>NSUserNotificationUsageDescription</key>
+            <string>VVCE TimeTable sends reminders 5 minutes before each class, break and lunch.</string>
+            <key>UILaunchStoryboardName</key>
+            <string>LaunchScreen</string>
+            <key>UIMainStoryboardFile</key>
+            <string>Main</string>
+            <key>UISupportedInterfaceOrientations</key>
+            <array>
+              <string>UIInterfaceOrientationPortrait</string>
+            </array>
+            <key>UIViewControllerBasedStatusBarAppearance</key>
+            <false/>
+          </dict>
+          </plist>
+          PLIST_EOF
+          echo "✅ Custom Info.plist applied"
+
+      # ── Step 4: Apply our VVCE app icons ──────────────────────────────────
+      - name: Apply VVCE app icons
+        run: |
+          # Our repo already has the VVCE icons in ios/Runner/Assets.xcassets/AppIcon.appiconset/
+          # The fresh scaffold has a default AppIcon — we replace with ours
+          echo "✅ VVCE icons already in repo at ios/Runner/Assets.xcassets/AppIcon.appiconset/"
+          ls ios/Runner/Assets.xcassets/AppIcon.appiconset/ | head -5
+
+      # ── Step 5: Install dependencies ──────────────────────────────────────
+      - name: flutter pub get
         run: flutter pub get
 
-      # ── Regenerate iOS folder if xcodeproj is missing or incomplete ──────
-      - name: Ensure iOS project exists
+      # ── Step 6: CocoaPods ─────────────────────────────────────────────────
+      - name: Install CocoaPods dependencies
         run: |
-          if [ ! -f "ios/Runner.xcodeproj/project.pbxproj" ]; then
-            echo "project.pbxproj missing — regenerating iOS project"
-            flutter create --platforms=ios --org com.vvce .
-          else
-            echo "project.pbxproj found ✅"
-          fi
-
-      - name: Select Xcode version
-        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods --no-document
-          cd ios && pod install --repo-update
+          cd ios
+          pod install --repo-update
         continue-on-error: true
 
-      - name: Build iOS (unsigned — no codesign)
+      # ── Step 7: Build ─────────────────────────────────────────────────────
+      - name: Build iOS release (no codesign)
         run: flutter build ios --release --no-codesign
 
+      # ── Step 8: Package as .ipa ───────────────────────────────────────────
       - name: Package IPA
         run: |
           mkdir -p Payload
@@ -143,7 +238,7 @@ jobs:
           rm -rf Payload
           ls -lh "VVCE_Timetable_v${{ github.run_number }}_iOS.ipa"
 
-      - name: Upload IPA
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: VVCE_Timetable_iOS_IPA
@@ -157,9 +252,9 @@ jobs:
           files: VVCE_Timetable_v${{ github.run_number }}_iOS.ipa
           name: VVCE Timetable ${{ github.ref_name }}
           body: |
-            ## 🍎 iOS IPA — Unsigned (sideload only)
+            ## 🍎 iOS IPA — Unsigned (sideload)
             Install with **AltStore** (altstore.io) or **Sideloadly** (sideloadly.io).
-            No jailbreak required.
+            No jailbreak needed.
           draft: false
           prerelease: false
         env:
@@ -168,5 +263,5 @@ jobs:
       - name: Summary
         run: |
           IPA="VVCE_Timetable_v${{ github.run_number }}_iOS.ipa"
-          echo "## ✅ iOS IPA Built — $(du -sh $IPA | cut -f1)" >> $GITHUB_STEP_SUMMARY
-          echo "Install via **AltStore** or **Sideloadly**" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ iOS IPA — $(du -sh $IPA | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "Install via **AltStore** or **Sideloadly** — no jailbreak needed" >> $GITHUB_STEP_SUMMARY

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../data/student_data.dart';
-import '../utils/prefs_service.dart' show PrefsService;
 import '../utils/app_theme.dart';
 import '../utils/prefs_service.dart';
 import '../utils/notification_service.dart';
@@ -19,13 +18,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey   = GlobalKey<FormState>();
-  final _nameCtrl  = TextEditingController();
-  final _usnCtrl   = TextEditingController();
+  final _formKey  = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _usnCtrl  = TextEditingController();
 
   bool _isLoading = false;
 
-  // Fictional example hints — NOT real students, just for guidance
+  // Fictional example hints — NOT real students, just for UI guidance
   static const _nameHints = [
     'e.g., ARJUN KUMAR S',
     'e.g., DIVYA SHARMA R',
@@ -52,72 +51,100 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ── Login handler ─────────────────────────────────────────────────────────
+  // ── Login ────────────────────────────────────────────────────────────────
   Future<void> _login() async {
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
 
-    // Small UX delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await Future.delayed(const Duration(milliseconds: 400));
 
-    final enteredName = _nameCtrl.text.trim();
-    final enteredUSN  = _usnCtrl.text.trim();
+      final enteredName = _nameCtrl.text.trim().toUpperCase();
+      final enteredUSN  = _usnCtrl.text.trim().toUpperCase();
 
-    // Validate against the official student list
-    final record = validateStudent(enteredUSN, enteredName);
+      // Validate against official student list
+      final record = validateStudent(enteredUSN, enteredName);
 
-    if (!mounted) return;
-
-    if (record == null) {
-      // ── Invalid credentials ──────────────────────────────────────
-      setState(() => _isLoading = false);
-      _showErrorDialog();
-      return;
-    }
-
-    // ── Valid — check if already logged in on another device ────
-    final prefs = await PrefsService.getInstance();
-
-    if (prefs.isLoggedIn && prefs.studentName.isNotEmpty) {
-      // Account already logged in — check if it's the same device
-      final sameDevice = await prefs.isCurrentDevice();
       if (!mounted) return;
-      if (!sameDevice) {
+
+      if (record == null) {
         setState(() => _isLoading = false);
-        _showAlreadyLoggedInDialog();
+        _showErrorDialog();
         return;
       }
-    }
 
-    await prefs.saveStudent(
-      name:    record.name,
-      usn:     record.usn,
-      section: 'G',
-      group:   record.group,
-    );
+      // Check device lock — wrapped in try/catch so it never blocks login
+      try {
+        final prefs = await PrefsService.getInstance();
+        if (prefs.isLoggedIn &&
+            prefs.studentName.isNotEmpty &&
+            prefs.studentUSN != enteredUSN) {
+          // Different student already logged in on this device — check device
+          final sameDevice = await prefs.isCurrentDevice();
+          if (!mounted) return;
+          if (!sameDevice) {
+            setState(() => _isLoading = false);
+            _showAlreadyLoggedInDialog();
+            return;
+          }
+        }
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+        await prefs.saveStudent(
+          name:    record.name,
+          usn:     record.usn,
+          section: 'G',
+          group:   record.group,
+        );
+      } catch (e) {
+        // If device check fails for any reason, still allow login
+        debugPrint('Device check error (ignored): $e');
+        final prefs = await PrefsService.getInstance();
+        await prefs.saveStudent(
+          name:    record.name,
+          usn:     record.usn,
+          section: 'G',
+          group:   record.group,
+        );
+      }
 
-    // Schedule today's class notifications
-    await NotificationService().requestPermission();
-    await NotificationService().scheduleNotificationsForToday();
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const TimetableScreen(),
-        transitionsBuilder: (_, animation, __, child) => SlideTransition(
-          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-              .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-          child: child,
+      // Schedule notifications (non-blocking)
+      NotificationService().requestPermission().then((_) {
+        NotificationService().scheduleNotificationsForToday();
+      }).catchError((e) => debugPrint('Notification error: $e'));
+
+      if (!mounted) return;
+
+      // Navigate to timetable
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const TimetableScreen(),
+          transitionsBuilder: (_, animation, __, child) => SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          ),
+          transitionDuration: const Duration(milliseconds: 500),
         ),
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-    );
+      );
+    } catch (e) {
+      debugPrint('Login error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  // ── Already logged in on another device dialog ───────────────────────────
+  // ── Already logged in dialog ──────────────────────────────────────────────
   void _showAlreadyLoggedInDialog() {
     showDialog<void>(
       context: context,
@@ -140,13 +167,19 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
               const Text('Already Logged In',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.black87)),
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87)),
               const SizedBox(height: 10),
               Text(
                 'Your account is already logged in on another device.\n\n'
                 'Please log out from that device first, then try again here.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.black.withOpacity(0.55), height: 1.5),
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black.withOpacity(0.55),
+                    height: 1.5),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -156,11 +189,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: const Text('Understood',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -170,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Error dialog for invalid credentials ─────────────────────────────────
+  // ── Invalid credentials dialog ────────────────────────────────────────────
   void _showErrorDialog() {
     showDialog<void>(
       context: context,
@@ -182,7 +217,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Error icon
               Container(
                 width: 64, height: 64,
                 decoration: BoxDecoration(
@@ -196,19 +230,18 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'Invalid Credentials',
                 style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                ),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87),
               ),
               const SizedBox(height: 10),
               Text(
-                'Please Try Again\n\nMake sure your Name and USN match exactly as per the official Section G student list.',
+                'Please Try Again\n\nMake sure your Name and USN match exactly as per the official Section G student list.\n\nName must be in CAPITAL LETTERS.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black.withOpacity(0.55),
-                  height: 1.5,
-                ),
+                    fontSize: 13,
+                    color: Colors.black.withOpacity(0.55),
+                    height: 1.5),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -223,7 +256,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: const Text('Try Again',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -255,12 +289,13 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 SizedBox(height: size.height * 0.06),
                 _buildHeader(),
-                SizedBox(height: size.height * 0.05),
+                SizedBox(height: size.height * 0.04),
                 _buildFormCard(),
                 const SizedBox(height: 16),
                 Text(
                   'VVCE Mysore • Academic Year 2025-26',
-                  style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11),
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.4), fontSize: 11),
                 ).animate(delay: 900.ms).fadeIn(),
                 const SizedBox(height: 30),
               ],
@@ -288,16 +323,28 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           padding: const EdgeInsets.all(6),
           child: ClipOval(
-            child: Image.asset('assets/images/vvce_logo.png', fit: BoxFit.contain),
+            child: Image.asset(
+              'assets/images/vvce_logo.png',
+              fit: BoxFit.contain,
+            ),
           ),
         )
             .animate()
-            .scale(begin: const Offset(0.5, 0.5), duration: 700.ms, curve: Curves.elasticOut)
+            .scale(
+                begin: const Offset(0.5, 0.5),
+                duration: 700.ms,
+                curve: Curves.elasticOut)
             .fadeIn(duration: 500.ms),
         const SizedBox(height: 16),
         const Text('VVCE TimeTable',
-            style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: 1))
-            .animate(delay: 200.ms).slideY(begin: 0.4).fadeIn(duration: 400.ms),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1))
+            .animate(delay: 200.ms)
+            .slideY(begin: 0.4)
+            .fadeIn(duration: 400.ms),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -306,19 +353,30 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Text('2nd Semester • CSE • Section G',
-              style: TextStyle(color: Color(0xFFFFD54F), fontSize: 12, fontWeight: FontWeight.w500)),
+              style: TextStyle(
+                  color: Color(0xFFFFD54F),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500)),
         ).animate(delay: 300.ms).slideY(begin: 0.4).fadeIn(duration: 400.ms),
       ],
     );
   }
 
   Widget _buildFormCard() {
+    final nameHint = _nameHints[DateTime.now().second % _nameHints.length];
+    final usnHint  = _usnHints[DateTime.now().second % _usnHints.length];
+
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 30,
+              offset: const Offset(0, 10))
+        ],
       ),
       child: Form(
         key: _formKey,
@@ -326,20 +384,29 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Welcome! 👋',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue))
-                .animate(delay: 400.ms).slideX(begin: -0.3).fadeIn(),
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryBlue))
+                .animate(delay: 400.ms)
+                .slideX(begin: -0.3)
+                .fadeIn(),
             const SizedBox(height: 4),
-            Text('Enter your Name and USN exactly as per the official student list',
-                style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.45), height: 1.4))
-                .animate(delay: 450.ms).fadeIn(),
+            Text(
+                    'Enter your Name and USN exactly as per the official student list',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black.withOpacity(0.45),
+                        height: 1.4))
+                .animate(delay: 450.ms)
+                .fadeIn(),
             const SizedBox(height: 24),
 
-            // ── Name field ──────────────────────────────────────────
-            _buildLabel('Full Name', delay: 500),
-            const SizedBox(height: 8),
-            // Caps hint
+            // ── Full Name ───────────────────────────────────────────
+            _label('Full Name'),
+            const SizedBox(height: 6),
             Container(
-              margin: const EdgeInsets.only(bottom: 6),
+              margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: Colors.amber.withOpacity(0.1),
@@ -347,29 +414,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 border: Border.all(color: Colors.amber.withOpacity(0.4)),
               ),
               child: Row(children: [
-                const Icon(Icons.keyboard_capslock_rounded, size: 14, color: Colors.amber),
+                const Icon(Icons.keyboard_capslock_rounded,
+                    size: 14, color: Colors.amber),
                 const SizedBox(width: 6),
                 Text('Enter name in CAPITAL LETTERS only',
-                    style: TextStyle(fontSize: 11, color: Colors.amber[800], fontWeight: FontWeight.w600)),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.amber[800],
+                        fontWeight: FontWeight.w600)),
               ]),
             ),
             TextFormField(
               controller: _nameCtrl,
               textCapitalization: TextCapitalization.characters,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
-              decoration: _inputDecoration(_nameHints[DateTime.now().second % _nameHints.length], Icons.person_rounded),
+              style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87),
+              decoration: _decor(nameHint, Icons.person_rounded),
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Please enter your full name';
-                if (v.trim().length < 2) return 'Name is too short';
+                if (v == null || v.trim().isEmpty) {
+                  return 'Please enter your full name';
+                }
                 return null;
               },
             ).animate(delay: 500.ms).slideX(begin: -0.2).fadeIn(duration: 400.ms),
 
             const SizedBox(height: 16),
 
-            // ── USN field ───────────────────────────────────────────
-            _buildLabel('USN', delay: 600),
-            const SizedBox(height: 8),
+            // ── USN ─────────────────────────────────────────────────
+            _label('USN'),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _usnCtrl,
               textCapitalization: TextCapitalization.characters,
@@ -377,11 +452,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
                 LengthLimitingTextInputFormatter(12),
               ],
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
-              decoration: _inputDecoration(_usnHints[DateTime.now().second % _usnHints.length], Icons.badge_rounded),
+              style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87),
+              decoration: _decor(usnHint, Icons.badge_rounded),
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Please enter your USN';
-                if (v.trim().length < 8) return 'USN seems too short';
+                if (v == null || v.trim().isEmpty) {
+                  return 'Please enter your USN';
+                }
                 return null;
               },
             ).animate(delay: 600.ms).slideX(begin: -0.2).fadeIn(duration: 400.ms),
@@ -389,41 +468,49 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 16),
 
             // ── Section (frozen) ────────────────────────────────────
-            _buildLabel('Section', delay: 700),
-            const SizedBox(height: 8),
+            _label('Section'),
+            const SizedBox(height: 6),
             Container(
               height: 56,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: AppTheme.primaryBlue.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.25)),
+                border:
+                    Border.all(color: AppTheme.primaryBlue.withOpacity(0.25)),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.group_rounded, color: AppTheme.primaryBlue, size: 18),
+              child: Row(children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 12),
-                  const Text('G', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text('Fixed',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.green)),
+                  child: const Icon(Icons.group_rounded,
+                      color: AppTheme.primaryBlue, size: 18),
+                ),
+                const SizedBox(width: 12),
+                const Text('G',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryBlue)),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
-              ),
+                  child: const Text('Fixed',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green)),
+                ),
+              ]),
             ).animate(delay: 700.ms).slideX(begin: -0.2).fadeIn(duration: 400.ms),
 
             const SizedBox(height: 10),
@@ -436,25 +523,26 @@ class _LoginScreenState extends State<LoginScreen> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.blue.withOpacity(0.2)),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Group (G1/G2/G3) is auto-assigned based on your USN',
-                      style: TextStyle(fontSize: 11, color: Colors.blue[700], height: 1.4),
-                    ),
+              child: Row(children: [
+                const Icon(Icons.info_outline_rounded,
+                    color: Colors.blue, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Group (G1/G2/G3) is auto-assigned based on your USN',
+                    style:
+                        TextStyle(fontSize: 11, color: Colors.blue[700], height: 1.4),
                   ),
-                ],
-              ),
+                ),
+              ]),
             ).animate(delay: 750.ms).fadeIn(),
 
             const SizedBox(height: 28),
 
-            // ── Login button ────────────────────────────────────────
+            // ── Button ──────────────────────────────────────────────
             SizedBox(
-              width: double.infinity, height: 54,
+              width: double.infinity,
+              height: 54,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
@@ -462,16 +550,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   foregroundColor: Colors.white,
                   elevation: 4,
                   shadowColor: AppTheme.primaryBlue.withOpacity(0.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                 ),
                 child: _isLoading
-                    ? const SizedBox(width: 22, height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                    ? const SizedBox(
+                        width: 22, height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5))
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('View My Timetable',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5)),
                           SizedBox(width: 8),
                           Icon(Icons.arrow_forward_rounded, size: 20),
                         ],
@@ -484,25 +578,26 @@ class _LoginScreenState extends State<LoginScreen> {
     ).animate(delay: 350.ms).slideY(begin: 0.3).fadeIn(duration: 500.ms);
   }
 
-  Widget _buildLabel(String text, {required int delay}) {
-    return Text(text,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primaryBlue))
-        .animate(delay: Duration(milliseconds: delay)).fadeIn();
-  }
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryBlue)),
+      );
 
-  InputDecoration _inputDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
-      prefixIcon: Container(
-        margin: const EdgeInsets.all(10),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryBlue.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+  InputDecoration _decor(String hint, IconData icon) => InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+        prefixIcon: Container(
+          margin: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryBlue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: AppTheme.primaryBlue, size: 18),
         ),
-        child: Icon(icon, color: AppTheme.primaryBlue, size: 18),
-      ),
-    );
-  }
+      );
 }
