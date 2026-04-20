@@ -1,0 +1,24 @@
+{
+  "name": "VVCE TimeTable",
+  "short_name": "VVCE TT",
+  "description": "VVCE Mysore 2nd Semester CSE Section G Timetable",
+  "start_url": "/vvce_timetable/",
+  "display": "standalone",
+  "background_color": "#1A237E",
+  "theme_color": "#1A237E",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
