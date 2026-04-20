@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="VVCE TimeTable"/>
+<meta name="theme-color" content="#1A237E"/>
+<title>VVCE TimeTable — 2nd Sem CSE Sec G</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --blue:#1A237E;--blue2:#283593;--gold:#FFB300;--gold2:#FFD54F;
+    --green:#43A047;--red:#E53935;--orange:#FF6F00;--purple:#7C4DFF;
+    --teal:#00897B;--brown:#8D6E63;--cyan:#039BE5;--pink:#AD1457;
+    --bg:#F5F7FF;--card:#fff;--text:#111;--sub:#555;--border:#e0e0e0;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  /* ── SCREENS ── */
+  .screen{display:none;min-height:100vh}
+  .screen.active{display:flex;flex-direction:column}
+  /* ── SPLASH ── */
+  #splash{background:linear-gradient(135deg,#0D1B6E,#1A237E,#283593);
+    align-items:center;justify-content:center;text-align:center;gap:16px}
+  .splash-logo{width:130px;height:130px;background:#fff;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 30px rgba(255,179,0,.5);padding:8px;
+    animation:pop .8s cubic-bezier(.34,1.56,.64,1) both}
+  .splash-logo img{width:100%;height:100%;object-fit:contain;border-radius:50%}
+  .splash-title{color:#fff;font-size:42px;font-weight:900;letter-spacing:6px}
+  .splash-sub{color:rgba(255,255,255,.7);font-size:13px;line-height:1.6}
+  .splash-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+    border-radius:30px;padding:8px 20px;color:var(--gold2);font-size:13px;font-weight:600}
+  .splash-spinner{width:32px;height:32px;border:2.5px solid rgba(255,255,255,.2);
+    border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+  .splash-foot{color:rgba(255,255,255,.35);font-size:11px;letter-spacing:.5px;margin-top:8px}
+  .splash-built{color:rgba(255,255,255,.5);font-size:11px;font-weight:600}
+  .splash-ver{color:rgba(255,255,255,.3);font-size:10px;letter-spacing:1.5px}
+  /* ── LOGIN ── */
+  #login{background:linear-gradient(135deg,#0D1B6E,#1A237E,#283593);
+    align-items:center;justify-content:flex-start;padding:20px 20px 40px}
+  .login-header{text-align:center;padding:30px 0 24px;flex-shrink:0}
+  .login-logo{width:90px;height:90px;background:#fff;border-radius:50%;
+    margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 20px rgba(255,179,0,.4);padding:6px}
+  .login-logo img{width:100%;height:100%;object-fit:contain;border-radius:50%}
+  .login-title{color:#fff;font-size:26px;font-weight:800;letter-spacing:.5px}
+  .login-badge{background:rgba(255,255,255,.1);border-radius:20px;
+    padding:5px 14px;color:var(--gold2);font-size:12px;font-weight:500;
+    display:inline-block;margin-top:8px}
+  .login-card{background:#fff;border-radius:26px;padding:26px;width:100%;
+    max-width:420px;margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .login-card h2{font-size:22px;font-weight:800;color:var(--blue);margin-bottom:4px}
+  .login-card p{font-size:12px;color:#888;margin-bottom:22px;line-height:1.5}
+  .field-label{font-size:13px;font-weight:600;color:var(--blue);margin-bottom:6px}
+  .caps-hint{background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.4);
+    border-radius:8px;padding:5px 10px;font-size:11px;color:#e65100;
+    font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .field-wrap{margin-bottom:16px}
+  input[type=text]{width:100%;padding:14px 14px 14px 48px;border:1.5px solid var(--border);
+    border-radius:12px;font-size:15px;font-weight:500;outline:none;
+    background:#fff;transition:border .2s;color:#111;
+    -webkit-appearance:none}
+  input[type=text]:focus{border-color:var(--blue)}
+  .input-wrap{position:relative}
+  .input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    width:28px;height:28px;background:rgba(26,35,126,.1);border-radius:7px;
+    display:flex;align-items:center;justify-content:center}
+  .frozen-field{height:54px;border:1.5px solid rgba(26,35,126,.25);border-radius:12px;
+    background:rgba(26,35,126,.06);display:flex;align-items:center;padding:0 12px;gap:12px}
+  .frozen-field .fi{width:34px;height:34px;background:rgba(26,35,126,.1);
+    border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .frozen-val{font-size:15px;font-weight:700;color:var(--blue);flex:1}
+  .frozen-tag{background:rgba(67,160,71,.12);color:#2e7d32;
+    font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px}
+  .info-box{background:rgba(21,101,192,.06);border:1px solid rgba(21,101,192,.2);
+    border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;
+    font-size:11px;color:#1565c0;line-height:1.4;margin-top:8px}
+  .login-btn{width:100%;height:52px;background:var(--blue);color:#fff;
+    border:none;border-radius:14px;font-size:16px;font-weight:700;
+    letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:8px;margin-top:24px;transition:opacity .2s;
+    -webkit-appearance:none}
+  .login-btn:active{opacity:.85}
+  .login-btn:disabled{opacity:.6;cursor:not-allowed}
+  .login-foot{text-align:center;color:rgba(255,255,255,.4);font-size:11px;
+    margin-top:14px}
+  /* ── TIMETABLE ── */
+  #timetable{background:var(--bg);flex-direction:column}
+  .tt-header{background:linear-gradient(135deg,#0D1B6E,#1A237E,#283593);
+    padding:env(safe-area-inset-top,0) 0 0;
+    box-shadow:0 2px 12px rgba(0,0,0,.3)}
+  .tt-top{display:flex;align-items:center;padding:12px 16px;gap:10px}
+  .tt-logo{width:40px;height:40px;background:#fff;border-radius:50%;
+    padding:3px;flex-shrink:0}
+  .tt-logo img{width:100%;height:100%;border-radius:50%;object-fit:contain}
+  .tt-brand{flex:1}
+  .tt-brand-name{color:#fff;font-size:15px;font-weight:800}
+  .tt-brand-sub{color:rgba(255,255,255,.6);font-size:11px}
+  .tt-btns{display:flex;gap:6px}
+  .tt-btn{width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;
+    justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0}
+  .tt-btn.active{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3)}
+  .student-bar{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+    border-radius:12px;margin:0 14px 12px;padding:10px 14px;
+    display:flex;align-items:center;gap:12px}
+  .stu-avatar{width:36px;height:36px;background:var(--gold);border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
+  .stu-info{flex:1;min-width:0}
+  .stu-name{color:#fff;font-size:14px;font-weight:700;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stu-usn{color:rgba(255,255,255,.6);font-size:11px}
+  .stu-right{text-align:right;flex-shrink:0}
+  .stu-group{background:rgba(255,179,0,.2);border:1px solid rgba(255,179,0,.5);
+    border-radius:7px;padding:2px 10px;color:var(--gold);
+    font-size:13px;font-weight:800;margin-bottom:4px;display:inline-block}
+  .stu-clock{color:var(--gold);font-size:15px;font-weight:800}
+  .stu-day{color:rgba(255,255,255,.5);font-size:10px}
+  /* Day tabs */
+  .day-tabs{display:flex;gap:8px;padding:0 14px 12px;overflow-x:auto;
+    scrollbar-width:none;-ms-overflow-style:none}
+  .day-tabs::-webkit-scrollbar{display:none}
+  .day-tab{flex-shrink:0;padding:6px 16px;border-radius:20px;font-size:13px;
+    font-weight:600;cursor:pointer;transition:all .25s;
+    background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);
+    border:1px solid transparent;position:relative}
+  .day-tab.today{border-color:rgba(255,255,255,.4)}
+  .day-tab.today::before{content:'';width:6px;height:6px;background:var(--gold);
+    border-radius:50%;display:inline-block;margin-right:5px}
+  .day-tab.active{background:#fff;color:var(--blue);font-weight:700;
+    box-shadow:0 2px 8px rgba(26,35,126,.4)}
+  /* Schedule */
+  .schedule{flex:1;overflow-y:auto;padding:10px 14px 30px}
+  .day-heading{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .day-heading h2{font-size:20px;font-weight:800;color:var(--blue)}
+  .today-pill{background:#43A047;color:#fff;font-size:11px;font-weight:700;
+    padding:3px 10px;border-radius:20px}
+  .class-count{margin-left:auto;font-size:12px;color:#999}
+  /* Subject cards */
+  .slot-card{background:#fff;border-radius:14px;margin-bottom:10px;
+    overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);
+    display:flex;border-left:4px solid #ccc;transition:transform .15s}
+  .slot-card:active{transform:scale(.98)}
+  .slot-card.ongoing{box-shadow:0 0 0 1.5px #43A047,0 4px 16px rgba(67,160,71,.3)}
+  .card-icon{width:48px;min-width:48px;display:flex;align-items:center;
+    justify-content:center;font-size:22px;margin:14px 0 14px 14px;
+    background:rgba(0,0,0,.05);border-radius:10px;height:48px}
+  .card-body{flex:1;padding:12px 10px;min-width:0}
+  .card-top{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+  .code-badge{padding:2px 8px;border-radius:5px;font-size:10px;
+    font-weight:700;color:#fff;letter-spacing:.3px}
+  .now-badge{background:#43A047;color:#fff;font-size:9px;font-weight:800;
+    padding:2px 8px;border-radius:5px;letter-spacing:.5px;
+    animation:pulse 1.6s ease-in-out infinite}
+  .card-subject{font-size:14px;font-weight:700;color:#111;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-faculty{font-size:11px;color:#777;margin-top:3px;line-height:1.4}
+  .card-right{padding:12px 14px;text-align:right;display:flex;
+    flex-direction:column;align-items:flex-end;justify-content:space-between;
+    min-width:80px}
+  .card-time{font-size:12px;font-weight:700;color:inherit}
+  .card-time-end{font-size:10px;color:#999}
+  .room-badge{font-size:10px;font-weight:600;padding:3px 8px;
+    border-radius:6px;white-space:nowrap;margin-top:4px}
+  /* Break cards */
+  .break-card{background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.1);
+    border-radius:12px;margin-bottom:10px;padding:12px 16px;
+    display:flex;align-items:center;gap:10px}
+  .break-icon{font-size:18px}
+  .break-label{font-size:13px;color:#999;font-style:italic}
+  .break-time{margin-left:auto;font-size:11px;color:#bbb}
+  /* Stats */
+  .stats-panel{display:none;padding:0 14px 8px}
+  .stats-panel.show{display:block}
+  .stats-title{font-size:14px;font-weight:700;color:#333;margin-bottom:10px}
+  .stats-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;
+    scrollbar-width:none}
+  .stats-scroll::-webkit-scrollbar{display:none}
+  .stat-chip{min-width:72px;background:#fff;border-radius:12px;
+    padding:10px;text-align:center;border:1px solid rgba(0,0,0,.08);flex-shrink:0}
+  .stat-icon{font-size:20px;margin-bottom:2px}
+  .stat-count{font-size:18px;font-weight:800}
+  .stat-label{font-size:9px;color:#999;font-weight:500}
+  /* Dark mode */
+  body.dark{--bg:#0D1117;--card:#21262D;--text:#e6edf3;--sub:#8b949e;
+    --border:#30363D}
+  body.dark .login-card,body.dark .slot-card,body.dark .stat-chip{
+    background:var(--card);color:var(--text)}
+  body.dark .day-heading h2{color:#e6edf3}
+  body.dark .card-subject{color:#e6edf3}
+  body.dark .break-card{background:rgba(255,255,255,.04);
+    border-color:rgba(255,255,255,.08)}
+  body.dark input[type=text]{background:#161B22;border-color:#30363D;color:#e6edf3}
+  body.dark .frozen-field{background:rgba(121,134,203,.06);
+    border-color:rgba(121,134,203,.25)}
+  body.dark .info-box{background:rgba(121,134,203,.06);
+    border-color:rgba(121,134,203,.2);color:#7986CB}
+  body.dark .class-count,body.dark .break-label,body.dark .break-time{color:#8b949e}
+  /* Animations */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pop{from{transform:scale(0.3);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  /* Dialog */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);
+    display:flex;align-items:center;justify-content:center;z-index:100;
+    padding:20px;display:none}
+  .overlay.show{display:flex}
+  .dialog{background:#fff;border-radius:24px;padding:28px;max-width:360px;
+    width:100%;text-align:center}
+  body.dark .dialog{background:#21262D}
+  .dialog-icon{width:64px;height:64px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:36px;margin:0 auto 16px}
+  .dialog h3{font-size:20px;font-weight:800;margin-bottom:10px}
+  .dialog p{font-size:13px;color:#666;line-height:1.6;margin-bottom:24px}
+  body.dark .dialog p{color:#8b949e}
+  .dialog-btn{width:100%;padding:14px;border:none;border-radius:12px;
+    font-size:15px;font-weight:700;cursor:pointer;color:#fff}
+  /* Spinner inline */
+  .spin-sm{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;
+    display:inline-block}
+  /* Install prompt */
+  .install-bar{background:var(--blue);color:#fff;padding:10px 16px;
+    display:none;align-items:center;gap:10px;font-size:13px}
+  .install-bar.show{display:flex}
+  .install-btn{background:var(--gold);color:#000;border:none;
+    border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;
+    cursor:pointer;margin-left:auto;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- ── SPLASH ───────────────────────────────────────────────────────── -->
+<div id="splash" class="screen active">
+  <div class="splash-logo">
+    <img src="icons/icon-192.png" alt="VVCE"/>
+  </div>
+  <div class="splash-title">VVCE</div>
+  <div class="splash-sub">Vidya Vardhaka College<br>of Engineering</div>
+  <div style="width:50px;height:3px;background:var(--gold);border-radius:2px"></div>
+  <div class="splash-badge">2nd Sem • CSE • Section G</div>
+  <div class="splash-spinner"></div>
+  <div style="font-size:11px;color:rgba(255,255,255,.4)">Loading your timetable...</div>
+  <div style="margin-top:24px">
+    <div class="splash-foot">Mysore, Karnataka</div>
+    <div class="splash-built" style="margin-top:4px">Built by Nitin Mahadev</div>
+    <div class="splash-ver" style="margin-top:3px">v1.0.0</div>
+  </div>
+</div>
+
+<!-- ── LOGIN ────────────────────────────────────────────────────────── -->
+<div id="login" class="screen">
+  <div class="login-header">
+    <div class="login-logo"><img src="icons/icon-192.png" alt="VVCE"/></div>
+    <div class="login-title">VVCE TimeTable</div>
+    <div class="login-badge">2nd Semester • CSE • Section G</div>
+  </div>
+  <div class="login-card">
+    <h2>Welcome! 👋</h2>
+    <p>Enter your Name and USN exactly as per the official Section G student list</p>
+    <div class="field-wrap">
+      <div class="field-label">Full Name</div>
+      <div class="caps-hint">⌨️ Enter name in CAPITAL LETTERS only</div>
+      <div class="input-wrap">
+        <div class="input-icon">👤</div>
+        <input type="text" id="nameInput" placeholder="e.g., ARJUN KUMAR S"
+          autocomplete="off" autocorrect="off" autocapitalize="characters"
+          spellcheck="false" inputmode="text"/>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">USN</div>
+      <div class="input-wrap">
+        <div class="input-icon">🪪</div>
+        <input type="text" id="usnInput" placeholder="e.g., 4XX25CS001"
+          autocomplete="off" autocorrect="off" autocapitalize="characters"
+          spellcheck="false" maxlength="12" inputmode="text"/>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">Section</div>
+      <div class="frozen-field">
+        <div class="fi">👥</div>
+        <div class="frozen-val">G</div>
+        <div class="frozen-tag">Fixed</div>
+      </div>
+      <div class="info-box">
+        ℹ️ Group (G1/G2/G3) is auto-assigned based on your USN
+      </div>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">
+      View My Timetable &rarr;
+    </button>
+  </div>
+  <div class="login-foot">VVCE Mysore • Academic Year 2025-26</div>
+</div>
+
+<!-- ── TIMETABLE ─────────────────────────────────────────────────────── -->
+<div id="timetable" class="screen">
+  <!-- PWA install prompt -->
+  <div class="install-bar" id="installBar">
+    <span>📱 Add to Home Screen for offline access!</span>
+    <button class="install-btn" onclick="installPWA()">Install</button>
+    <button onclick="document.getElementById('installBar').classList.remove('show')"
+      style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer">×</button>
+  </div>
+
+  <div class="tt-header">
+    <div class="tt-top">
+      <div class="tt-logo"><img src="icons/icon-192.png" alt="VVCE"/></div>
+      <div class="tt-brand">
+        <div class="tt-brand-name">VVCE Mysore</div>
+        <div class="tt-brand-sub">2nd Sem • CSE • Sec G</div>
+      </div>
+      <div class="tt-btns">
+        <div class="tt-btn" id="statsBtn" onclick="toggleStats()" title="Stats">📊</div>
+        <div class="tt-btn" id="themeBtn" onclick="toggleTheme()" title="Theme">🌙</div>
+        <div class="tt-btn" onclick="logout()" title="Logout">🚪</div>
+      </div>
+    </div>
+    <div class="student-bar">
+      <div class="stu-avatar" id="stuAvatar">N</div>
+      <div class="stu-info">
+        <div class="stu-name" id="stuName">Student</div>
+        <div class="stu-usn" id="stuUSN">USN</div>
+      </div>
+      <div class="stu-right">
+        <div class="stu-group" id="stuGroup">G1</div>
+        <div class="stu-clock" id="clock">--:--</div>
+        <div class="stu-day" id="dayLabel">---</div>
+      </div>
+    </div>
+    <div class="stats-panel" id="statsPanel"></div>
+    <div class="day-tabs" id="dayTabs"></div>
+  </div>
+  <div class="schedule" id="schedule"></div>
+</div>
+
+<!-- ── DIALOGS ────────────────────────────────────────────────────────── -->
+<div class="overlay" id="errDialog">
+  <div class="dialog">
+    <div class="dialog-icon" style="background:rgba(229,57,53,.1)">❌</div>
+    <h3>Invalid Credentials</h3>
+    <p>Name and USN do not match our records.<br><br>
+      • Enter name in <b>CAPITAL LETTERS</b><br>
+      • Check USN spelling carefully<br>
+      • Use your official college name</p>
+    <button class="dialog-btn" style="background:var(--blue)"
+      onclick="closeDialog('errDialog')">Try Again</button>
+  </div>
+</div>
+<div class="overlay" id="devDialog">
+  <div class="dialog">
+    <div class="dialog-icon" style="background:rgba(255,111,0,.1)">📱</div>
+    <h3>Already Logged In</h3>
+    <p>Your account is active on another device.<br><br>
+      Log out from that device first, then try again.</p>
+    <button class="dialog-btn" style="background:var(--orange)"
+      onclick="closeDialog('devDialog')">Understood</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// STUDENT DATABASE
+// ══════════════════════════════════════════════════════════
+const STUDENTS = [
+  // G1
+  ['4EV25CS117','MONISHA G K','G1'],['4EV25CS121','NAYANA M M','G1'],
+  ['4EV25CS125','NISHCHITH RAJU','G1'],['4EV25CS126','NISHCHITHA H S','G1'],
+  ['4EV25CS127','NISHKA KIRAN','G1'],['4EV25CS128','NITHIN MANJUNATH J K','G1'],
+  ['4EV25CS129','NITHYASHREE R B','G1'],['4EV25CS130','NYRUTHYA N M','G1'],
+  ['4EV25CS131','P NAVYASHREE','G1'],['4EV25CS132','PALGUNI N RAJ','G1'],
+  ['4EV25CS133','POOJA N','G1'],['4EV25CS135','POORVIKA M P','G1'],
+  ['4EV25CS136','PRAJWAL GONI','G1'],['4EV25CS138','PRATHAM T C','G1'],
+  ['4EV25CS139','PRATHAP M M','G1'],['4EV25CS140','PREETHAM M N','G1'],
+  ['4EV25CS141','PREETHAM S P','G1'],['4EV25CS142','PREETHI P','G1'],
+  ['4EV25CS143','PREETI SAJJAN','G1'],['4EV25CS144','PREETAM RAJ M','G1'],
+  ['4TV25CS120','NAMRATHA SURESH','G1'],['4TV25CS131','NITIN MAHADEV B K','G1'],
+  // G2
+  ['4TV25CS133','PALLAVI AMBIGER','G2'],['4TV25CS135','POOJA B M','G2'],
+  ['4TV25CS137','PRAKRUTHI J','G2'],['4TV25CS141','PRASHAMSA K SHANKAR','G2'],
+  ['4TV25CS142','PRATHAM J','G2'],['4TV25CS143','PRATHEEK M','G2'],
+  ['4TV25CS144','PRATHIKSHA D','G2'],['4TV25CS145','PRATHIKSHA H K','G2'],
+  ['4TV25CS146','PRATIBHA G N','G2'],['4TV25CS147','PREETHAM C M','G2'],
+  ['4TV25CS149','PREETHAM M P','G2'],['4TV25CS150','PREETHAM R','G2'],
+  ['4TV25CS151','PREETHAM SANTHOSH','G2'],['4TV25CS152','PREETHAM U','G2'],
+  ['4TV25CS153','PREETHAM Y M','G2'],['4TV25CS154','PRISHA THIMMAIAH A','G2'],
+  ['4TV25CS155','PRIYA P','G2'],['4TV25CS156','PRIYALAKSHMI M','G2'],
+  ['4TV25CS157','PRIYANKA AMARAVATHI','G2'],['4TV25CS158','PRIYANKA M','G2'],
+  ['4TV25CS160','PURVI ARADHYA','G2'],
+  // G3
+  ['4TV25CS162','RAKESH SHREEKANTH M M','G3'],['4VV25CS129','NAMITHA R REDDY','G3'],
+  ['4VV25CS130','NAMRATHA ANANYA K','G3'],['4VV25CS131','NANDAN J M','G3'],
+  ['4VV25CS132','NARENDRA S N','G3'],['4VV25CS133','NEHA PRASAD S','G3'],
+  ['4VV25CS134','NIHAL URS M K','G3'],['4VV25CS135','NIJAN D','G3'],
+  ['4VV25CS136','NIRANJAN SWAMY M','G3'],['4VV25CS137','NIREK JAIN THONIKADAVU','G3'],
+  ['4VV25CS138','NISCHAL S KUMAR','G3'],['4VV25CS139','NITHYASHREE S','G3'],
+  ['4VV25CS140','PANCHAMI G','G3'],['4VV25CS141','PAREEKSHITH RAJ S Y','G3'],
+  ['4VV25CS142','PATTAN AYOOB KHAN','G3'],['4VV25CS143','PAVAN R','G3'],
+  ['4VV25CS144','PAVANI GOWDA S P','G3'],['4VV25CS145','POORVITH S G','G3'],
+  ['4VV25CS146','PRAGNA H','G3'],['4VV25CS147','PRAJWAL M','G3'],
+  ['4VV25CS148','PRAKRUTHI T S','G3'],
+];
+
+function validateStudent(usn, name) {
+  return STUDENTS.find(s => s[0]===usn && s[1]===name) || null;
+}
+
+// ══════════════════════════════════════════════════════════
+// TIMETABLE DATA
+// ══════════════════════════════════════════════════════════
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const SUBJECT_META = {
+  '1BAIAK204': {color:'#FF6F00',icon:'🤖',name:'Intro to AI & Applications'},
+  '1BPLCS203': {color:'#1E88E5',icon:'💻',name:'Python Programming'},
+  '1BCHES202': {color:'#00897B',icon:'🔬',name:'Applied Chemistry'},
+  '1BENGK208': {color:'#43A047',icon:'📖',name:'Communicative Skills -II'},
+  '1BMATS201': {color:'#7C4DFF',icon:'🧮',name:'Applied Mathematics'},
+  '1BMATS201L':{color:'#8D6E63',icon:'🧬',name:'Applied Mathematics Lab'},
+  '1BIECK205': {color:'#E53935',icon:'⚡',name:'Intro to Electronics Engg.'},
+  '1BCHESL206':{color:'#8D6E63',icon:'🧬',name:'Applied Chemistry Lab'},
+  '1BKSKK210': {color:'#AD1457',icon:'🔤',name:'Samskruthika Kannada'},
+  '1BPLCSL207':{color:'#8D6E63',icon:'🧬',name:'Python Programming Lab'},
+  '1BPBLK209': {color:'#8D6E63',icon:'🔧',name:'Project-Based Learning'},
+};
+
+// Each entry: {type:'class',code,faculty,room,start,end}
+//          or {type:'tea'} or {type:'lunch'}
+const SCHEDULE = {
+  Monday: [
+    {type:'class',code:'1BAIAK204',faculty:'Prof. Suraksha P',room:'M-501',start:'09:00',end:'10:00'},
+    {type:'tea',start:'10:00',end:'10:30'},
+    {type:'class',code:'1BPLCS203',faculty:'Prof. Susan Shaju',room:'M-501',start:'10:30',end:'11:30'},
+    {type:'class',code:'1BCHES202',faculty:'Dr. Sowmya P T',room:'M-501',start:'11:30',end:'12:30'},
+    {type:'lunch',start:'12:30',end:'13:30'},
+    {type:'class',code:'1BENGK208',faculty:'Prof. Niranjan Sarja\nProf. Kirti Gupta',room:'M-501 / AB-07',start:'13:30',end:'15:30'},
+  ],
+  Tuesday: [
+    {type:'class',code:'1BMATS201',faculty:'Prof. Deepa R Acharya',room:'M-501',start:'08:00',end:'09:00'},
+    {type:'class',code:'1BCHES202',faculty:'Dr. Sowmya P T',room:'M-501',start:'09:00',end:'10:00'},
+    {type:'tea',start:'10:00',end:'10:30'},
+    {type:'class',code:'1BMATS201L',faculty:'Prof. Deepa R Acharya\nProf. Pallavi',room:'A-308',start:'10:30',end:'12:30',
+      groupFaculty:{G2:'Prof. Deepa R Acharya\nProf. Pallavi'},groupRoom:{}},
+    {type:'lunch',start:'12:30',end:'13:30'},
+    {type:'class',code:'1BIECK205',faculty:'Prof. Ankitha D M',room:'M-501',start:'13:30',end:'14:30'},
+    {type:'class',code:'1BPLCS203',faculty:'Prof. Susan Shaju',room:'M-501',start:'14:30',end:'15:30'},
+  ],
+  Wednesday: [
+    {type:'class',code:'1BMATS201',faculty:'Prof. Deepa R Acharya',room:'M-501',start:'08:00',end:'09:00'},
+    {type:'class',code:'1BIECK205',faculty:'Prof. Ankitha D M',room:'M-501',start:'09:00',end:'10:00'},
+    {type:'tea',start:'10:00',end:'10:30'},
+    {type:'class',code:'1BCHESL206',
+      faculty:'Dr. Anitha Sudhir',room:'G-202',start:'10:30',end:'12:30',
+      groupFaculty:{G1:'Dr. Anitha Sudhir',G2:'Dr. Vrushabendra B',G3:'Dr. Sowmya P T'},
+      groupRoom:{G1:'G-202',G2:'G-201',G3:'G-003'}},
+  ],
+  Thursday: [
+    {type:'class',code:'1BKSKK210',faculty:'Ms. Ashwini H B',room:'M-501',start:'09:00',end:'10:00'},
+    {type:'tea',start:'10:00',end:'10:30'},
+    {type:'class',code:'1BAIAK204',faculty:'Prof. Suraksha P',room:'M-501',start:'10:30',end:'11:30'},
+    {type:'class',code:'1BIECK205',faculty:'Prof. Ankitha D M',room:'M-501',start:'11:30',end:'12:30'},
+    {type:'lunch',start:'12:30',end:'13:30'},
+    {type:'class',code:'1BCHES202',faculty:'Dr. Sowmya P T',room:'M-501',start:'13:30',end:'14:30'},
+    {type:'class',code:'1BMATS201',faculty:'Prof. Deepa R Acharya',room:'M-501',start:'14:30',end:'15:30'},
+  ],
+  Friday: [
+    {type:'class',code:'1BPLCSL207',faculty:'Prof. Susan Shaju',room:'M-317',start:'08:00',end:'10:00'},
+    {type:'tea',start:'10:00',end:'10:30'},
+    {type:'class',code:'1BMATS201',faculty:'Prof. Deepa R Acharya',room:'M-501',start:'10:30',end:'11:30'},
+    {type:'class',code:'1BPLCS203',faculty:'Prof. Susan Shaju',room:'M-501',start:'11:30',end:'12:30'},
+    {type:'lunch',start:'12:30',end:'13:30'},
+    {type:'class',code:'1BPBLK209',faculty:'Prof. Sathwik Shetty\nProf. Uday\nProf. Keerthana',room:'M-402',start:'13:30',end:'15:30'},
+  ],
+};
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let state = {name:'',usn:'',group:'G1',dark:false,day:0};
+let deferredInstall = null;
+let clockTimer = null;
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
+function closeDialog(id){$(id).classList.remove('show');}
+function nowMins(){const d=new Date();return d.getHours()*60+d.getMinutes();}
+function toMins(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function isOngoing(start,end){const n=nowMins(),s=toMins(start),e=toMins(end);return n>=s&&n<e;}
+function todayIndex(){const w=new Date().getDay();return(w>=1&&w<=5)?w-1:0;}
+function save(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
+function load(key,def){try{const v=localStorage.getItem(key);return v?JSON.parse(v):def;}catch(e){return def;}}
+
+// ══════════════════════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════════════════════
+function updateClock(){
+  const d=new Date();
+  const h=String(d.getHours()).padStart(2,'0');
+  const m=String(d.getMinutes()).padStart(2,'0');
+  $('clock').textContent=h+':'+m;
+  $('dayLabel').textContent=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+}
+
+// ══════════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════════
+function doLogin(){
+  const nameRaw = $('nameInput').value.trim().toUpperCase();
+  const usnRaw  = $('usnInput').value.trim().toUpperCase();
+  if(!nameRaw||!usnRaw){
+    alert('Please fill in both Name and USN.');return;
+  }
+  const rec = validateStudent(usnRaw, nameRaw);
+  if(!rec){$('errDialog').classList.add('show');return;}
+
+  // Device lock check
+  const saved = load('vvce_student',null);
+  if(saved && saved.usn !== usnRaw){
+    const devId = load('vvce_device',null);
+    const curId = navigator.userAgent.slice(0,40);
+    if(devId && devId !== curId){$('devDialog').classList.add('show');return;}
+  }
+
+  save('vvce_student',{name:rec[1],usn:rec[0],group:rec[2]});
+  save('vvce_device', navigator.userAgent.slice(0,40));
+  loadTimetable();
+}
+
+// Allow Enter key on USN field
+document.addEventListener('DOMContentLoaded',()=>{
+  $('usnInput').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  $('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('usnInput').focus();});
+  $('nameInput').addEventListener('input',e=>{
+    e.target.value=e.target.value.toUpperCase();
+  });
+  $('usnInput').addEventListener('input',e=>{
+    e.target.value=e.target.value.toUpperCase();
+  });
+});
+
+// ══════════════════════════════════════════════════════════
+// LOGOUT
+// ══════════════════════════════════════════════════════════
+function logout(){
+  if(!confirm('Log out?'))return;
+  save('vvce_student',null);
+  save('vvce_device',null);
+  show('login');
+}
+
+// ══════════════════════════════════════════════════════════
+// LOAD TIMETABLE
+// ══════════════════════════════════════════════════════════
+function loadTimetable(){
+  const stu = load('vvce_student',null);
+  if(!stu||!stu.name){show('login');return;}
+  state.name=stu.name; state.usn=stu.usn; state.group=stu.group;
+  state.dark=load('vvce_dark',false);
+  state.day=load('vvce_day',todayIndex());
+  if(state.dark)document.body.classList.add('dark');
+  // Fill student bar
+  $('stuName').textContent=state.name;
+  $('stuUSN').textContent=state.usn;
+  $('stuGroup').textContent=state.group;
+  $('stuAvatar').textContent=state.name[0];
+  updateClock();
+  if(clockTimer)clearInterval(clockTimer);
+  clockTimer=setInterval(()=>{updateClock();renderSchedule();},30000);
+  buildDayTabs();
+  renderSchedule();
+  buildStats();
+  show('timetable');
+  // Show install prompt after 3s on mobile
+  setTimeout(()=>{
+    if(deferredInstall)$('installBar').classList.add('show');
+    else if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone){
+      $('installBar').style.display='flex';$('installBar').classList.add('show');
+      $('installBar').querySelector('button.install-btn').textContent='How to Install';
+      $('installBar').querySelector('button.install-btn').onclick=showiOSInstall;
+    }
+  },3000);
+}
+
+function showiOSInstall(){
+  alert('To install on iPhone:\n1. Tap the Share button (📤) at the bottom\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" — done! 🎉');
+}
+
+// ══════════════════════════════════════════════════════════
+// DAY TABS
+// ══════════════════════════════════════════════════════════
+function buildDayTabs(){
+  const today=todayIndex();
+  $('dayTabs').innerHTML=DAYS.map((d,i)=>`
+    <div class="day-tab${i===state.day?' active':''}${i===today?' today':''}"
+      onclick="selectDay(${i})">${d.slice(0,3)}</div>
+  `).join('');
+}
+
+function selectDay(i){
+  state.day=i; save('vvce_day',i);
+  buildDayTabs(); renderSchedule();
+}
+
+// ══════════════════════════════════════════════════════════
+// RENDER SCHEDULE
+// ══════════════════════════════════════════════════════════
+function renderSchedule(){
+  const dayName=DAYS[state.day];
+  const entries=SCHEDULE[dayName]||[];
+  const isToday=state.day===todayIndex();
+  const classCount=entries.filter(e=>e.type==='class').length;
+
+  let html=`<div class="day-heading">
+    <h2>${dayName}</h2>
+    ${isToday?'<div class="today-pill">Today</div>':''}
+    <div class="class-count">${classCount} classes</div>
+  </div>`;
+
+  entries.forEach((entry,idx)=>{
+    if(entry.type==='class'){
+      const meta=SUBJECT_META[entry.code]||{color:'#607D8B',icon:'📚',name:entry.code};
+      const ongoing=isToday&&isOngoing(entry.start,entry.end);
+      // Resolve group-specific faculty/room
+      let faculty=entry.faculty, room=entry.room;
+      if(entry.groupFaculty&&entry.groupFaculty[state.group]) faculty=entry.groupFaculty[state.group];
+      if(entry.groupRoom&&entry.groupRoom[state.group]) room=entry.groupRoom[state.group];
+      html+=`
+      <div class="slot-card${ongoing?' ongoing':''}" style="border-left-color:${meta.color}">
+        <div class="card-icon" style="background:${meta.color}18;color:${meta.color}">${meta.icon}</div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="code-badge" style="background:${meta.color}">${entry.code}</div>
+            ${ongoing?'<div class="now-badge">NOW</div>':''}
+          </div>
+          <div class="card-subject">${meta.name}</div>
+          <div class="card-faculty">${faculty.replace(/\n/g,'<br>')}</div>
+        </div>
+        <div class="card-right" style="color:${meta.color}">
+          <div>
+            <div class="card-time">${entry.start}</div>
+            <div class="card-time-end">${entry.end}</div>
+          </div>
+          <div class="room-badge" style="background:${meta.color}18;color:${meta.color}">
+            📍 ${room.replace(/\n/g,'<br>')}
+          </div>
+        </div>
+      </div>`;
+    } else if(entry.type==='tea'){
+      html+=`<div class="break-card">
+        <div class="break-icon">☕</div>
+        <div class="break-label">Tea Break</div>
+        <div class="break-time">${entry.start} – ${entry.end}</div>
+      </div>`;
+    } else if(entry.type==='lunch'){
+      html+=`<div class="break-card">
+        <div class="break-icon">🍽️</div>
+        <div class="break-label">Lunch Break</div>
+        <div class="break-time">${entry.start} – ${entry.end}</div>
+      </div>`;
+    }
+  });
+
+  $('schedule').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════════
+function buildStats(){
+  const counts={};
+  Object.values(SCHEDULE).forEach(entries=>{
+    entries.forEach(e=>{
+      if(e.type==='class'){
+        const m=SUBJECT_META[e.code];
+        if(m){counts[e.code]=(counts[e.code]||{count:0,meta:m});counts[e.code].count++;}
+      }
+    });
+  });
+  const chips=Object.entries(counts)
+    .sort((a,b)=>b[1].count-a[1].count)
+    .map(([code,{count,meta}])=>`
+      <div class="stat-chip">
+        <div class="stat-icon">${meta.icon}</div>
+        <div class="stat-count" style="color:${meta.color}">${count}</div>
+        <div class="stat-label">${code.replace('1B','')}</div>
+      </div>`).join('');
+  $('statsPanel').innerHTML=`<div class="stats-title">Weekly Overview</div>
+    <div class="stats-scroll">${chips}</div>`;
+}
+
+function toggleStats(){
+  $('statsPanel').classList.toggle('show');
+  $('statsBtn').classList.toggle('active');
+}
+
+// ══════════════════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════════════════
+function toggleTheme(){
+  state.dark=!state.dark; save('vvce_dark',state.dark);
+  document.body.classList.toggle('dark',state.dark);
+  $('themeBtn').textContent=state.dark?'☀️':'🌙';
+}
+
+// ══════════════════════════════════════════════════════════
+// PWA INSTALL
+// ══════════════════════════════════════════════════════════
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); deferredInstall=e;
+});
+function installPWA(){
+  if(deferredInstall){deferredInstall.prompt();deferredInstall=null;
+    $('installBar').classList.remove('show');}
+}
+
+// ══════════════════════════════════════════════════════════
+// SERVICE WORKER
+// ══════════════════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+setTimeout(()=>{
+  const stu=load('vvce_student',null);
+  if(stu&&stu.name){loadTimetable();}
+  else{show('login');}
+},2500); // Splash for 2.5s
+</script>
+</body>
+</html>
